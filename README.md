@@ -44,6 +44,20 @@ A sample result is like:
 ![LLaMA Inference](https://raw.githubusercontent.com/juncongmoo/pyllama/main/docs/llama_profiling.png)
 
 
+### Start a gradio webui
+
+
+```bash
+$ cd apps/gradio
+$ python webapp_single.py  --ckpt_dir $CKPT_DIR --tokenizer_path $TOKENIZER_PATH
+```
+
+You should see something like this in your browser:
+
+![LLaMA Inference](https://raw.githubusercontent.com/juncongmoo/pyllama/main/docs/llama_webui.png)
+
+
+
 ## Multiple GPU Inference
 
 The provided `example.py` can be run on a single or multi-gpu node with `torchrun` and will output completions for two pre-defined prompts. Using `TARGET_FOLDER` as defined in `download.sh`:
