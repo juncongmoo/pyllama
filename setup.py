@@ -19,7 +19,7 @@ def read_file(filename: str):
 DESCRIPTION = "🦙 LLaMA: Open and Efficient Foundation Language Models in A Single GPU"
 
 setup(name="pyllama",
-    version="0.0.2dev0",
+    version="0.0.2dev1",
     author="Juncong Moo;Meta AI",
     author_email="JuncongMoo@gmail.com",
     description=DESCRIPTION,

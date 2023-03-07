@@ -23,7 +23,7 @@ python inference.py --ckpt_dir $CKPT_DIR --tokenizer_path $TOKENIZER_PATH
 
 The following is an example of LLaMA running in a 8GB single GPU.
 
-![LLaMA Inference](docs/llama_inference.png)
+![LLaMA Inference](https://raw.githubusercontent.com/juncongmoo/pyllama/main/docs/llama_inference.png)
 
 
 ### Tips
@@ -38,7 +38,7 @@ python inference_driver.py --ckpt_dir $CKPT_DIR --tokenizer_path $TOKENIZER_PATH
 
 A sample result is like:
 
-![LLaMA Inference](docs/llama_profiling.png)
+![LLaMA Inference](https://raw.githubusercontent.com/juncongmoo/pyllama/main/docs/llama_profiling.png)
 
 
 ## Multiple GPU Inference
