@@ -4,3 +4,7 @@
 from .generation import LLaMA
 from .model_single import ModelArgs, Transformer
 from .tokenizer import Tokenizer
+
+
+__version__='0.0.2'
+
