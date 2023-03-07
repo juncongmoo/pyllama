@@ -16,11 +16,12 @@ def read_file(filename: str):
     except:
         return []
 
-DESCRIPTION = "LLaMA: Open and Efficient Foundation Language Models"
+DESCRIPTION = "🦙 LLaMA: Open and Efficient Foundation Language Models in A Single GPU"
 
 setup(name="pyllama",
-    version="0.0.1dev2",
-    author="Meta AI",
+    version="0.0.2dev0",
+    author="Juncong Moo;Meta AI",
+    author_email="JuncongMoo@gmail.com",
     description=DESCRIPTION,
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
@@ -38,7 +39,7 @@ setup(name="pyllama",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ],
-    url="https://github.com/facebookresearch/llama",
+    url="https://github.com/juncongmoo/pyllama",
     packages=find_packages()
     )
 
