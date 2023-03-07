@@ -56,7 +56,14 @@ You should see something like this in your browser:
 
 ![LLaMA Inference](https://raw.githubusercontent.com/juncongmoo/pyllama/main/docs/llama_webui.png)
 
+### Start a web server
 
+The following command will start a flask web server:
+
+```bash
+$ cd apps/flask
+$ python web_server_single.py  --ckpt_dir $CKPT_DIR --tokenizer_path $TOKENIZER_PATH
+```
 
 ## Multiple GPU Inference
 
