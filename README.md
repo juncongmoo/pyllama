@@ -11,6 +11,8 @@ In a conda env with pytorch / cuda available, run
 pip install pyllama
 ```
 
+> 🐏 If you have installed llama library from other sources, please uninstall the previous llama library and use `pip install pyllama -U` to install the latest version.
+
 ## Single GPU Inference
 
 Set the environment variables `CKPT_DIR` as your llamm model folder, for example `/llama_data/7B`, and `TOKENIZER_PATH` as your tokenizer's path, such as `/llama_data/tokenizer.model`.
