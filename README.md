@@ -45,6 +45,27 @@ A sample result is like:
 
 - Tune `max_seq_len` and `max_batch_size` to reduce memory consumption to be able to run in GPU. Refer to: [this post](https://github.com/juncongmoo/pyllama/issues/9)!
 
+### Start a gradio webui
+
+
+```bash
+$ cd apps/gradio
+$ python webapp_single.py  --ckpt_dir $CKPT_DIR --tokenizer_path $TOKENIZER_PATH
+```
+
+You should see something like this in your browser:
+
+![LLaMA Inference](https://raw.githubusercontent.com/juncongmoo/pyllama/main/docs/llama_webui.png)
+
+### Start a web server
+
+The following command will start a flask web server:
+
+```bash
+$ cd apps/flask
+$ python web_server_single.py  --ckpt_dir $CKPT_DIR --tokenizer_path $TOKENIZER_PATH
+```
+
 ## Multiple GPU Inference
 
 The provided `example.py` can be run on a single or multi-gpu node with `torchrun` and will output completions for two pre-defined prompts. Using `TARGET_FOLDER` as defined in `download.sh`:

@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--ckpt_dir', type=str, required=True)
 parser.add_argument('--tokenizer_path', type=str, required=True)
 parser.add_argument('--max_seq_len', type=int, default=512)
-parser.add_argument('--max_batch_size', type=int, default=32)
+parser.add_argument('--max_batch_size', type=int, default=1)
 
 
 app = FastAPI()

@@ -1,7 +1,6 @@
 import torch
 
 import json
-import argparse
 from pathlib import Path
 from llama import ModelArgs, Transformer, Tokenizer, LLaMA
 
@@ -56,6 +55,7 @@ def run(
         print("🦙LLaMA:", result.strip())
 
 def get_args():
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt_dir", type=str, default="/llama_data/7B")
     parser.add_argument("--tokenizer_path", type=str, default="/llama_data/tokenizer.model")
