@@ -43,6 +43,7 @@ A sample result is like:
 
 ![LLaMA Inference](https://raw.githubusercontent.com/juncongmoo/pyllama/main/docs/llama_profiling.png)
 
+- Tune `max_seq_len` and `max_batch_size` to reduce memory consumption to be able to run in GPU. Refer to: [this post](https://github.com/juncongmoo/pyllama/issues/9)!
 
 ## Multiple GPU Inference
 
