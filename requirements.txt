@@ -1,5 +1,5 @@
-torch
-fairscale
-fire
-hiq-python
-sentencepiece
+torch>=1.12.0
+fairscale>=0.4.13
+fire~=0.5.0
+hiq-python>=1.1.9
+sentencepiece==0.1.97

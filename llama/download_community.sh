@@ -17,9 +17,12 @@ N_SHARD_DICT["13B"]="1"
 N_SHARD_DICT["30B"]="3"
 N_SHARD_DICT["65B"]="7"
 
-echo "Downloading tokenizer"
-wget ${PRESIGNED_URL/'*'/"tokenizer.model"} -O ${TARGET_FOLDER}"/tokenizer.model"
-wget ${PRESIGNED_URL/'*'/"tokenizer_checklist.chk"} -O ${TARGET_FOLDER}"/tokenizer_checklist.chk"
+set -x
+echo "Downloading tokenizer..."
+wget --progress=bar:force ${PRESIGNED_URL/'*'/"tokenizer.model"} -O ${TARGET_FOLDER}"/tokenizer.model"
+echo ✅ ${TARGET_FOLDER}"/tokenizer.model
+wget --progress=bar:force ${PRESIGNED_URL/'*'/"tokenizer_checklist.chk"} -O ${TARGET_FOLDER}"/tokenizer_checklist.chk"
+echo ✅ ${TARGET_FOLDER}"/tokenizer_checklist.chk
 
 (cd ${TARGET_FOLDER} && md5sum -c tokenizer_checklist.chk)
 
@@ -29,10 +32,15 @@ do
     mkdir -p ${TARGET_FOLDER}"/${i}"
     for s in $(seq -f "0%g" 0 ${N_SHARD_DICT[$i]})
     do
-        wget ${PRESIGNED_URL/'*'/"${i}/consolidated.${s}.pth"} -O ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth"
+        echo running: wget --continue --progress=bar:force ${PRESIGNED_URL/'*'/"${i}/consolidated.${s}.pth"} -O ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth"
+        echo "downloading" ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth" ...please wait for a few minutes ...
+        wget --continue --progress=bar:force ${PRESIGNED_URL/'*'/"${i}/consolidated.${s}.pth"} -O ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth"
+        echo ✅ ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth 
     done
-    wget ${PRESIGNED_URL/'*'/"${i}/params.json"} -O ${TARGET_FOLDER}"/${i}/params.json"
-    wget ${PRESIGNED_URL/'*'/"${i}/checklist.chk"} -O ${TARGET_FOLDER}"/${i}/checklist.chk"
+    wget --progress=bar:force ${PRESIGNED_URL/'*'/"${i}/params.json"} -O ${TARGET_FOLDER}"/${i}/params.json"
+    echo ✅ ${TARGET_FOLDER}"/${i}/params.json
+    wget --progress=bar:force ${PRESIGNED_URL/'*'/"${i}/checklist.chk"} -O ${TARGET_FOLDER}"/${i}/checklist.chk"
+    echo ✅ ${TARGET_FOLDER}"/${i}/checklist.chk
     echo "Checking checksums"
     (cd ${TARGET_FOLDER}"/${i}" && md5sum -c checklist.chk)
 done
