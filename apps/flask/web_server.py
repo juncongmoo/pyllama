@@ -23,10 +23,10 @@ from llama import ModelArgs, Transformer, Tokenizer, LLaMA
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--ckpt_dir', type=str, required=True)
-parser.add_argument('--tokenizer_path', type=str, required=True)
-parser.add_argument('--max_seq_len', type=int, default=512)
-parser.add_argument('--max_batch_size', type=int, default=1)
+parser.add_argument("--ckpt_dir", type=str, required=True)
+parser.add_argument("--tokenizer_path", type=str, required=True)
+parser.add_argument("--max_seq_len", type=int, default=512)
+parser.add_argument("--max_batch_size", type=int, default=1)
 
 
 app = FastAPI()
@@ -112,17 +112,23 @@ if __name__ == "__main__":
         top_p: float = 0.95
 
     if dist.get_rank() == 0:
+
         @app.post("/llama/")
         def generate(config: Config):
             if len(config.prompts) > args.max_batch_size:
-                return { 'error': 'too much prompts.' }
+                return {"error": "too much prompts."}
             for prompt in config.prompts:
                 if len(prompt) + config.max_gen_len > args.max_seq_len:
-                    return { 'error': 'max_gen_len too large.' }
-            dist.broadcast_object_list([config.prompts, config.max_gen_len, config.temperature, config.top_p])
+                    return {"error": "max_gen_len too large."}
+            dist.broadcast_object_list(
+                [config.prompts, config.max_gen_len, config.temperature, config.top_p]
+            )
 
             results = generator.generate(
-                config.prompts, max_gen_len=config.max_gen_len, temperature=config.temperature, top_p=config.top_p
+                config.prompts,
+                max_gen_len=config.max_gen_len,
+                temperature=config.temperature,
+                top_p=config.top_p,
             )
 
             return {"responses": results}
@@ -134,8 +140,10 @@ if __name__ == "__main__":
             try:
                 dist.broadcast_object_list(config)
                 generator.generate(
-                    config[0], max_gen_len=config[1], temperature=config[2], top_p=config[3]
+                    config[0],
+                    max_gen_len=config[1],
+                    temperature=config[2],
+                    top_p=config[3],
                 )
             except:
                 pass
-
