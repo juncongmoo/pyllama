@@ -328,7 +328,8 @@ def get_args():
     import argparse
 
     parser = argparse.ArgumentParser()
-
+    parser.add_argument('model', type=str, help='llama model to load',
+                        default="decapoda-research/llama-7b-hf")
     parser.add_argument(
         "dataset",
         type=str,
