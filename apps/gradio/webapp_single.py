@@ -32,7 +32,9 @@ def load(
     with open(Path(ckpt_dir) / "params.json", "r") as f:
         params = json.loads(f.read())
 
-    model_args: ModelArgs = ModelArgs(max_seq_len=max_seq_len, max_batch_size=max_batch_size, **params)
+    model_args: ModelArgs = ModelArgs(
+        max_seq_len=max_seq_len, max_batch_size=max_batch_size, **params
+    )
     tokenizer = Tokenizer(model_path=tokenizer_path)
     model_args.vocab_size = tokenizer.n_words
     torch.set_default_tensor_type(torch.cuda.HalfTensor)
@@ -55,13 +57,16 @@ def process(prompt: str):
 
 def get_args():
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt_dir", type=str, default="/llama_data/7B")
-    parser.add_argument("--tokenizer_path", type=str, default="/llama_data/tokenizer.model")
+    parser.add_argument(
+        "--tokenizer_path", type=str, default="/llama_data/tokenizer.model"
+    )
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = get_args()
     ckpt_dir = args.ckpt_dir
     tokenizer_path = args.tokenizer_path
@@ -74,13 +79,12 @@ if __name__ == '__main__':
     generator = load(
         ckpt_dir, tokenizer_path, local_rank, world_size, max_seq_len, max_batch_size
     )
-    
+
     demo = gr.Interface(
-        fn = process,
-        inputs = gr.Textbox(lines=10, placeholder="Your prompt here..."),
-        outputs = "text",
+        fn=process,
+        inputs=gr.Textbox(lines=10, placeholder="Your prompt here..."),
+        outputs="text",
     )
 
     # To create a public link, set `share=True` in `launch()`.
     demo.launch(share=True)
-

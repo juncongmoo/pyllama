@@ -24,7 +24,9 @@ def load(
     with open(Path(ckpt_dir) / "params.json", "r") as f:
         params = json.loads(f.read())
 
-    model_args: ModelArgs = ModelArgs(max_seq_len=max_seq_len, max_batch_size=max_batch_size, **params)
+    model_args: ModelArgs = ModelArgs(
+        max_seq_len=max_seq_len, max_batch_size=max_batch_size, **params
+    )
     tokenizer = Tokenizer(model_path=tokenizer_path)
     model_args.vocab_size = tokenizer.n_words
     torch.set_default_tensor_type(torch.cuda.HalfTensor)
@@ -33,6 +35,7 @@ def load(
     model.load_state_dict(checkpoint, strict=False)
     generator = LLaMA(model, tokenizer)
     return generator
+
 
 def run(
     ckpt_dir: str,
@@ -44,21 +47,29 @@ def run(
 ):
     local_rank = 0
     world_size = 1
-    generator = load(ckpt_dir, tokenizer_path, local_rank, world_size, max_seq_len, max_batch_size)
+    generator = load(
+        ckpt_dir, tokenizer_path, local_rank, world_size, max_seq_len, max_batch_size
+    )
     prompts = [
         # For these prompts, the expected answer is the natural continuation of the prompt
-        "I believe the meaning of life is", # removed: keep only one prompt
+        "I believe the meaning of life is",  # removed: keep only one prompt
     ]
     print("Prompt:", prompts)
-    results = generator.generate(prompts, max_gen_len=256, temperature=temperature, top_p=top_p)
+    results = generator.generate(
+        prompts, max_gen_len=256, temperature=temperature, top_p=top_p
+    )
     for result in results:
         print("🦙LLaMA:", result.strip())
 
+
 def get_args():
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt_dir", type=str, default="/llama_data/7B")
-    parser.add_argument("--tokenizer_path", type=str, default="/llama_data/tokenizer.model")
+    parser.add_argument(
+        "--tokenizer_path", type=str, default="/llama_data/tokenizer.model"
+    )
     return parser.parse_args()
 
 
@@ -70,7 +81,5 @@ if __name__ == "__main__":
         temperature=0.8,
         top_p=0.95,
         max_seq_len=1024,
-        max_batch_size=1
+        max_batch_size=1,
     )
-
-

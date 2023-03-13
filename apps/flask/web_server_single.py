@@ -12,14 +12,16 @@ import torch.distributed as dist
 from llama import ModelArgs, Transformer, Tokenizer, LLaMA
 
 
-
 def get_args():
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt_dir", type=str, default="/llama_data/7B")
-    parser.add_argument("--tokenizer_path", type=str, default="/llama_data/tokenizer.model")
-    parser.add_argument('--max_seq_len', type=int, default=512)
-    parser.add_argument('--max_batch_size', type=int, default=1)
+    parser.add_argument(
+        "--tokenizer_path", type=str, default="/llama_data/tokenizer.model"
+    )
+    parser.add_argument("--max_seq_len", type=int, default=512)
+    parser.add_argument("--max_batch_size", type=int, default=1)
     return parser.parse_args()
 
 
@@ -45,7 +47,9 @@ def load(
     with open(Path(ckpt_dir) / "params.json", "r") as f:
         params = json.loads(f.read())
 
-    model_args: ModelArgs = ModelArgs(max_seq_len=max_seq_len, max_batch_size=max_batch_size, **params)
+    model_args: ModelArgs = ModelArgs(
+        max_seq_len=max_seq_len, max_batch_size=max_batch_size, **params
+    )
     tokenizer = Tokenizer(model_path=tokenizer_path)
     model_args.vocab_size = tokenizer.n_words
     torch.set_default_tensor_type(torch.cuda.HalfTensor)
@@ -88,12 +92,15 @@ if __name__ == "__main__":
     @app.post("/llama/")
     def generate(config: Config):
         if len(config.prompts) > args.max_batch_size:
-            return { 'error': 'too much prompts.' }
+            return {"error": "too much prompts."}
         for prompt in config.prompts:
             if len(prompt) + config.max_gen_len > args.max_seq_len:
-                return { 'error': 'max_gen_len too large.' }
+                return {"error": "max_gen_len too large."}
         results = generator.generate(
-            config.prompts, max_gen_len=config.max_gen_len, temperature=config.temperature, top_p=config.top_p
+            config.prompts,
+            max_gen_len=config.max_gen_len,
+            temperature=config.temperature,
+            top_p=config.top_p,
         )
         return {"responses": results}
 

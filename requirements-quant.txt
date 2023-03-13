@@ -1,0 +1,4 @@
+transformers
+gptq
+sentencepiece
+shutil
