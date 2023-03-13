@@ -26,26 +26,26 @@ Edit the `download.sh` script with the signed url provided in the email to downl
 
 ### ㊙️ Community Secretive Way
 
-There is a secret way to download the checkpoints and tokens. To download all of them, run:
+There is a secret way to download the checkpoints and tokenizers. There are four models(7B,13B,30B,65B) available. To download all of them, run:
 
 ```bash
 python -m llama.download
 ```
 
-To download only the 7B model files, run:
+To download only the 7B model files to your current directory, run:
 
 ```bash
-python -m llama.download 7B
+python -m llama.download --model_size 7B
 ```
 
-To download only the 7B and 30B model files to folder /tmp/pyllama_data, run:
+To download only the 7B and 30B model files to folder `/tmp/pyllama_data`, run:
 
 ```bash
-python -m llama.download 7B,30B /tmp/pyllama_data
+python -m llama.download --model_size 7B,30B --folder /tmp/pyllama_data
 ```
 
 The help doc is:
-```
+```bash
 $python -m llama.download --help
 usage: download.py [-h] [--model_size MODEL_SIZE] [--folder FOLDER]
 
