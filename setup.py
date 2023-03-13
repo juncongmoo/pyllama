@@ -35,7 +35,7 @@ def read_file(filename: str):
 
 DESCRIPTION = "🦙 LLaMA: Open and Efficient Foundation Language Models in A Single GPU"
 
-r_quant = (read_file(f"{here}/requirements-quant.txt"),)
+r_quant = read_file(f"{here}/requirements-quant.txt")
 r_basic = read_file(f"{here}/requirements.txt")
 
 
@@ -80,6 +80,6 @@ setup(
     packages=["llama"],
     extras_require={
         "quant": r_quant,
-        "full": list(r_quant) + list(r_basic),
+        "full": r_quant + r_basic,
     },
 )

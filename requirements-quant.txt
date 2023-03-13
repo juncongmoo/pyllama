@@ -1,4 +1,3 @@
-transformers
-gptq
-sentencepiece
-shutil
+transformers>=4.26.0
+gptq>=0.0.2
+sentencepiece>=0.1.97
