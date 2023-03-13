@@ -385,7 +385,12 @@ def get_args():
         action="store_true",
         help="Whether to compute perplexity during benchmarking for verification.",
     )
-    parser.add_argument("--cuda", type=str, default="cuda:0", help="GPU device string, 'cuda:0' by default.")
+    parser.add_argument(
+        "--cuda",
+        type=str,
+        default="cuda:0",
+        help="GPU device string, 'cuda:0' by default.",
+    )
     parser.add_argument(
         "--eval",
         action="store_false",
