@@ -11,7 +11,7 @@ from llama.hf.utils import avoid_tensor_modified, get_llama
 
 
 @torch.no_grad()
-def llama_sequential(model, dataloader, dev):
+def llama_sequential(model, dataloader, args, dev):
     use_cache = model.config.use_cache
     model.config.use_cache = False
     layers = model.model.layers
@@ -423,7 +423,7 @@ def run(args=None):
     )
 
     if not args.load and args.wbits <= 16 and not args.nearest:
-        quantizers = llama_sequential(model, dataloader, dev)
+        quantizers = llama_sequential(model, dataloader, args, dev)
 
     if args.benchmark:
         gpus = [torch.device("cuda:%d" % i) for i in range(torch.cuda.device_count())]
