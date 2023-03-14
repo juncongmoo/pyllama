@@ -17,6 +17,7 @@ import os
 import shutil
 
 import torch
+import hiq
 
 
 """
@@ -298,8 +299,78 @@ def write_tokenizer(tokenizer_path, input_tokenizer_path):
         input_tokenizer_path, os.path.join(tokenizer_path, "tokenizer.model")
     )
 
+def convert_llama_meta():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tokenizer_path", type=str, required=True)
+    parser.add_argument("--model", type=str, required=True, choices=NUM_SHARDS.keys())
+    parser.add_argument("--output_path", type=str, required=True)
+    args = parser.parse_args()
 
-def main():
+    assert "tokenizer.model" in os.listdir(args.tokenizer_path), "Tokenizer model not found in llama path"
+    for model in models:
+        if model not in os.listdir(args.tokenizer_path):
+            print(f"[WARN] Model {model} not found in llama path")
+    assert args.model in os.listdir(args.tokenizer_path), f"Model {args.model} not found in llama path"
+    
+    output_path = os.path.join(args.output_path, args.model)
+    os.makedirs(output_path, exist_ok=True)
+
+    if "tokenizer.model" not in os.listdir(output_path):
+        shutil.copy(os.path.join(args.tokenizer_path, "tokenizer.model"), args.output_path)
+
+    model_path, tokenizer_path, output_path = os.path.join(args.tokenizer_path, args.model),os.path.join(args.output_path, "tokenizer.model"), output_path
+    
+    checkpoints = sorted(Path(model_path).glob("*.pth"))
+    with open(Path(model_path) / "params.json", "r") as f:
+        params = json.loads(f.read())
+    
+    model_args = ModelArgs(
+        max_seq_len=2048,
+        max_batch_size=1,
+        **params
+    )
+
+    tokenizer = Tokenizer(model_path=tokenizer_path)
+    model_args.vocab_size = tokenizer.n_words
+
+    with init_empty_weights():
+        torch.set_default_tensor_type(torch.HalfTensor)
+        model = Transformer(model_args)
+    torch.set_default_tensor_type(torch.FloatTensor)
+
+    key_to_dim = {"w1": 0, "w2": -1,"w3": 0,"wo": -1,"wq": 0,"wk": 0,"wv": 0,"output": 0,"tok_embeddings": -1,
+        "ffn_norm": None,        "attention_norm": None,        "norm": None,        "rope": None
+    }
+
+    dt = {}
+
+    for i, ckpt in tqdm(enumerate(checkpoints), total=len(checkpoints)):
+        checkpoint = torch.load(ckpt, map_location="cpu")
+        for parameter_name, parameter in model.named_parameters():
+            if parameter_name not in dt:
+                dt[parameter_name] = torch.zeros_like(parameter, device="cpu")
+            short_name = parameter_name.split(".")[-2]
+            if key_to_dim[short_name] is None and i == 0:
+                dt[parameter_name] = checkpoint[parameter_name]
+            elif key_to_dim[short_name] == 0:
+                size = checkpoint[parameter_name].size(0)
+                dt[parameter_name][size * i : size * (i + 1), :] = checkpoint[
+                    parameter_name
+                ]
+            elif key_to_dim[short_name] == -1:
+                size = checkpoint[parameter_name].size(-1)
+                dt[parameter_name][:, size * i : size * (i + 1)] = checkpoint[
+                    parameter_name
+                ]
+            del checkpoint[parameter_name]
+        del checkpoint
+    with open(os.path.join(output_path, "params.json"), "w") as f:
+        f.write(json.dumps(params, indent=4))
+
+    torch.save(dt, os.path.join(output_path, "state_dict.pth"))
+
+
+def convert_llama_hf():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--input_dir",
@@ -328,4 +399,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    convert_llama_meta()
