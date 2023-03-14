@@ -3,7 +3,15 @@ import time
 import torch
 import torch.nn as nn
 
-from gptq import GPTQ, Quantizer, find_layers, make_quant, QuantLinear, get_loaders
+from gptq import (
+    GPTQ,
+    Quantizer,
+    find_layers,
+    make_quant,
+    QuantLinear,
+    get_loaders,
+    quantize,
+)
 
 from llama.hf.modeling_llama import LLaMAForCausalLM
 from llama.hf.configuration_llama import LLaMAConfig
@@ -80,7 +88,7 @@ def llama_sequential(model, dataloader, args, dev):
             outs[j] = layer(inps[j].unsqueeze(0), attention_mask=attention_mask)[0]
         for h in handles:
             h.remove()
-        print(f"\nQuantize layer: {i} ")
+        print(f"\nQuantize layer: {i} ", end=',')
         for name in subset:
             print(name, end=",")
             gptq[name].fasterquant(percdamp=args.percdamp, groupsize=args.groupsize)
@@ -101,7 +109,7 @@ def llama_sequential(model, dataloader, args, dev):
 
 
 @torch.no_grad()
-def llama_eval(model, testenc, dev):
+def llama_eval(model, testenc, args, dev):
     print("Evaluating ...")
 
     testenc = testenc.input_ids
@@ -208,6 +216,11 @@ def llama_pack(model, quantizers, wbits):
 
 
 def load_quant(model, checkpoint, wbits, seqlen=1024):
+    """
+    seqlen - seqlen refers to the maximum length of the input sequence that the model can process. The input sequence can be a sequence of words, tokens, or characters, depending on how the model is tokenized. The seqlen parameter is important because it determines the amount of memory that the model requires to process the input sequence. If the input sequence is too long, it may exceed the memory capacity of the model, leading to out-of-memory errors or slower inference times. In order to handle longer sequences, some models use techniques such as attention masking or truncation, which allow the model to process only a portion of the input sequence at a time. The seqlen parameter determines the maximum length of the input sequence that can be processed in a single step. If the input sequence is longer than the seqlen parameter, it may need to be split into multiple segments and processed separately.
+    """
+    import transformers
+
     config = LLaMAConfig.from_pretrained(model)
     avoid_tensor_modified()
 
@@ -223,19 +236,22 @@ def load_quant(model, checkpoint, wbits, seqlen=1024):
             del layers[name]
     make_quant(model, layers, wbits)
 
-    print("Loading model ...")
+    print(f"⌛️ Loading model from {checkpoint}...")
     model.load_state_dict(torch.load(checkpoint))
     model.seqlen = seqlen
-    print("Done.")
+    print(f"✅ Model from {checkpoint} is loaded successfully.")
 
     return model
 
 
 def llama_multigpu(model, gpus):
+    """A model parallelism implementation for LLaMA"""
+    import math
+    import copy
+
     model.model.embed_tokens = model.model.embed_tokens.to(gpus[0])
     if hasattr(model.model, "norm") and model.model.norm:
         model.model.norm = model.model.norm.to(gpus[-1])
-    import copy
 
     model.lm_head = copy.deepcopy(model.lm_head).to(gpus[-1])
 
@@ -265,7 +281,7 @@ def llama_multigpu(model, gpus):
     model.gpus = gpus
 
 
-def benchmark(model, input_ids, check=False, dev=torch.device("cuda:0")):
+def run_benchmark(model, input_ids, check=False, dev=torch.device("cuda:0")):
     input_ids = input_ids.to(model.gpus[0] if hasattr(model, "gpus") else dev)
     torch.cuda.synchronize()
 
@@ -328,8 +344,12 @@ def get_args():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('model', type=str, help='llama model to load',
-                        default="decapoda-research/llama-7b-hf")
+    parser.add_argument(
+        "model",
+        type=str,
+        help="llama model to load",
+        default="decapoda-research/llama-7b-hf",
+    )
     parser.add_argument(
         "dataset",
         type=str,
@@ -422,7 +442,7 @@ def run(args=None):
         seqlen=model.seqlen,
     )
 
-    if not args.load and args.wbits <= 16 and not args.nearest:
+    if not args.load and args.wbits < 16 and not args.nearest:
         quantizers = llama_sequential(model, dataloader, args, dev)
 
     if args.benchmark:
@@ -433,7 +453,7 @@ def run(args=None):
             model = model.to(dev)
         if args.benchmark:
             input_ids = next(iter(dataloader))[0][:, : args.benchmark]
-            benchmark(model, input_ids, check=args.check)
+            run_benchmark(model, input_ids, check=args.check)
     if args.load:
         exit()
 
@@ -447,7 +467,7 @@ def run(args=None):
                 dataset, seed=args.seed, model=args.model, seqlen=model.seqlen
             )
             print(dataset)
-            llama_eval(model, testloader, dev)
+            llama_eval(model, testloader, args, dev)
 
 
 if __name__ == "__main__":

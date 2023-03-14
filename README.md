@@ -5,11 +5,11 @@
 
 > 🔥 In order to download the checkpoints and tokenizer, use this BitTorrent link: "[magnet:?xt=urn:btih:ZXXDAUWYLRUXXBHUYEMS6Q5CE5WA3LVA&dn=LLaMA](magnet:?xt=urn:btih:ZXXDAUWYLRUXXBHUYEMS6Q5CE5WA3LVA&dn=LLaMA)".
 
-## 📥 Setup
+## 📥 Installation
 
 In a conda env with pytorch / cuda available, run
 ```
-pip install pyllama
+pip install pyllama -U
 ```
 
 > 🐏 If you have installed llama library from other sources, please uninstall the previous llama library and use `pip install pyllama -U` to install the latest version.
@@ -24,9 +24,9 @@ In order to download the checkpoints and tokenizer, fill this [google form](http
 Once your request is approved, you will receive links to download the tokenizer and model files.
 Edit the `download.sh` script with the signed url provided in the email to download the model weights and tokenizer.
 
-### ㊙️ Community Secretive Way
+### 🐒 Community Way
 
-There is a secret way to download the checkpoints and tokenizers. There are four models(7B,13B,30B,65B) available. To download all of them, run:
+There is another high-speed way to download the checkpoints and tokenizers. There are four models(7B,13B,30B,65B) available. To download all of them, run:
 
 ```bash
 python -m llama.download
@@ -52,13 +52,15 @@ usage: download.py [-h] [--model_size MODEL_SIZE] [--folder FOLDER]
 optional arguments:
   -h, --help            show this help message and exit
   --model_size MODEL_SIZE
-                        The size of the models that you want to download. A comma separated string of any of "7B", "13B", "30B", "65B". Totally 219G disk space is needed to download them all. If you only want
-                        to download the 7B one, just put "7B" here.
+                        The size of the models that you want to download. A comma separated string of 
+                        any of "7B", "13B", "30B", "65B". Totally 219G disk space is needed to 
+                        download them all. If you only want to download the 7B one, just put "7B" here.
   --folder FOLDER       The target folder for the download files
-
 ```
 
-## 💎 Quantization - 2/3/4/8/16-bit
+## 💎 Quantize LLaMA to run in a 4GB GPU
+
+`pyllama` support quantization of 2/3/4/8/16-bit so that you can run model in a 4G memory GPU.
 
 > You need to run `export HUGGING_FACE_HUB_TOKEN=XXX` to be able to access Hugging Face's data. You also need to install [gptq](https://pypi.org/project/gptq/) with command `pip install gptq`.
 
@@ -94,13 +96,13 @@ optional arguments:
   --eval                Evaluate the model with dataset wikitext2, ptb and c4
 ```
 
-- Quantize to 8-bit
+- Quantize 7B model to 8-bit
 
 ```bash
 python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --wbits 8 --save pyllama-7B8b.pt
 ```
 
-- Quantize to 2-bit
+- Quantize 7B model to 2-bit
 
 ```bash
 python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --wbits 2 --save pyllama-7B2b.pt
@@ -119,7 +121,7 @@ The download links for quantized LLaMA files are below:
 | 16-bit |  - | - | -|- |-|
 | 32-bit |  - | - | -|- |-|
 
-
+It took me 2 hours 40 mins to quantize the 65B model to 4bit. The file size is reduced from 122GB to 32GB.
 
 ## 🔮 Single GPU Inference
 
@@ -139,7 +141,15 @@ The following is an example of LLaMA running in a 8GB single GPU.
 
 ### 🥝 With Quantization
 
-TODO - stay tuned
+With quantization, you can run LLaMA with a 4GB memory GPU.
+
+- pyllama can run 7B model with 6GB GPU memory.
+
+![4bit-quant-6GB](docs/pyllama_7B_6GB.png)
+
+- pyllama can run 7B model with 3.2GB GPU memory.
+
+![2bit-quant-6GB](docs/pyllama_7B_3GB.png)
 
 ### 💡 Tips
 

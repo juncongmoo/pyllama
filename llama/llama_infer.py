@@ -1,38 +1,8 @@
-import time
-
 import torch
-import torch.nn as nn
 
-from gptq import find_layers, make_quant
-
-import transformers
 from transformers import AutoTokenizer
-
-from llama.hf.modeling_llama import LLaMAForCausalLM
-from llama.hf.configuration_llama import LLaMAConfig
-from llama.hf.utils import avoid_tensor_modified, get_llama
-
-
-def load_quant(model, checkpoint, wbits, seqlen=2048):
-    avoid_tensor_modified()
-    config = LLaMAConfig.from_pretrained(model)
-    torch.set_default_dtype(torch.half)
-    transformers.modeling_utils._init_weights = False
-    torch.set_default_dtype(torch.half)
-    model = LLaMAForCausalLM(config)
-    torch.set_default_dtype(torch.float)
-    model = model.eval()
-    layers = find_layers(model)
-    for name in ["lm_head"]:
-        if name in layers:
-            del layers[name]
-    make_quant(model, layers, wbits)
-
-    print("Loading model ...")
-    model.load_state_dict(torch.load(checkpoint))
-    model.seqlen = seqlen
-    print("Done.")
-    return model
+from llama.hf.utils import get_llama
+from llama.llama_quant import load_quant
 
 
 def get_args():
@@ -40,7 +10,7 @@ def get_args():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("model", type=str, help="llama model to load")
+    parser.add_argument("--model", type=str, default="decapoda-research/llama-7b-hf", help="llama model to load")
     parser.add_argument(
         "--wbits",
         type=int,
@@ -49,21 +19,24 @@ def get_args():
         help="#bits to use for quantization; use 16 for evaluating base model.",
     )
     parser.add_argument("--load", type=str, default="", help="Load quantized model.")
-
     parser.add_argument("--text", type=str, help="input text")
-
     parser.add_argument(
         "--min_length",
         type=int,
         default=10,
         help="The minimum length of the sequence to be generated.",
     )
-
+    parser.add_argument(
+        "--seqlen",
+        type=int,
+        default=1024,
+        help="The  maximum length of the input sequence that LLaMA can process.",
+    )
     parser.add_argument(
         "--max_length",
         type=int,
         default=50,
-        help="The maximum length of the sequence to be generated.",
+        help="The maximum length of the output sequence to be generated.",
     )
 
     parser.add_argument(
@@ -89,7 +62,7 @@ def get_args():
 def run(args=None):
     args = args or get_args()
     if args.load:
-        model = load_quant(args.model, args.load, args.wbits)
+        model = load_quant(args.model, args.load, args.wbits, args.seqlen)
     else:
         model = get_llama(args.model)
         model.eval()
@@ -111,7 +84,8 @@ def run(args=None):
             top_p=args.top_p,
             temperature=args.temperature,
         )
-    print(tokenizer.decode([el.item() for el in generated_ids[0]]))
+    print("*"*80)
+    print("🦙:", tokenizer.decode([el.item() for el in generated_ids[0]]))
 
 
 if __name__ == "__main__":
