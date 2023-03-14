@@ -54,12 +54,16 @@ def run(
         # For these prompts, the expected answer is the natural continuation of the prompt
         "I believe the meaning of life is",  # removed: keep only one prompt
     ]
-    print("Prompt:", prompts)
-    results = generator.generate(
-        prompts, max_gen_len=256, temperature=temperature, top_p=top_p
-    )
-    for result in results:
-        print("🦙LLaMA:", result.strip())
+    while True:
+        print("Prompt:", prompts)
+        results = generator.generate(
+            prompts, max_gen_len=256, temperature=temperature, top_p=top_p
+        )
+        for result in results:
+            print("🦙LLaMA:", result.strip())
+
+        user_input = input("please enter your prompts (Ctrl+C to exit): ")
+        prompts = [user_input]
 
 
 def get_args():
