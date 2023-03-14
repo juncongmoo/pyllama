@@ -23,16 +23,15 @@ import hiq
 Sample usage:
 
     ```
-    python src/transformers/models/llama/convert_llama_weights_to_hf.py \
-        --input_dir /path/to/downloaded/llama/weights --model_size 7B --output_dir /output/path
+    python -m llama.convert_llama --ckpt_dir $CKPT_DIR --tokenizer_path $TOKENIZER_PATH \
+        --model 7B --output_dir converted_meta --to fb --max_batch_size 4
     ```
 
 Thereafter, models can be loaded via:
 
     ```
-    tokenizer = transformers.LLaMATokenizer.from_pretrained("/output/path/tokenizer/")
-
-    model = transformers.LLaMAForCausalLM.from_pretrained("/output/path/llama-7b/")
+    tokenizer = llama.hf.LLaMATokenizer.from_pretrained("/output/path/tokenizer/")
+    model = llama.hf.LLaMAForCausalLM.from_pretrained("/output/path/llama-7b/")
     ```
 """
 
@@ -48,6 +47,8 @@ NUM_SHARDS = {
     "30B": 4,
     "65B": 8,
 }
+META_KEY_TO_DIM = {"w1": 0, "w2": -1, "w3": 0, "wo": -1, "wq": 0, "wk": 0, "wv": 0, "output": 0, "tok_embeddings": -1,
+                  "ffn_norm": None, "attention_norm": None, "norm": None, "rope": None}
 
 def write_json(text, path):
     with open(path, "w") as f:
@@ -293,81 +294,66 @@ def write_tokenizer(tokenizer_path, input_tokenizer_path):
     )
 
 
-def convert_llama_meta():
+def convert_llama_fb(args):
     from pathlib import Path
     from tqdm import tqdm
     from llama import ModelArgs, Tokenizer, Transformer
+    output_dir = os.path.join(args.output_dir, args.model_size)
+    os.makedirs(output_dir, exist_ok=True)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--tokenizer_path", type=str, required=True)
-    parser.add_argument("--model", type=str, required=True, choices=NUM_SHARDS.keys())
-    parser.add_argument("--output_path", type=str, required=True)
-    args = parser.parse_args()
+    if "tokenizer.model" not in os.listdir(output_dir):
+        shutil.copy(args.tokenizer_path, args.output_dir)
 
-    assert "tokenizer.model" in os.listdir(args.tokenizer_path), "Tokenizer model not found in tokenizer_path"
-    for model in NUM_SHARDS.keys():
-        if model not in os.listdir(args.tokenizer_path):
-            print(f"[WARN] Model {model} not found in llama path")
-    assert args.model in os.listdir(args.tokenizer_path), f"Model {args.model} not found in tokenizer_path"
+    tokenizer_path = os.path.join(args.output_dir, "tokenizer.model")
 
-    output_path = os.path.join(args.output_path, args.model)
-    os.makedirs(output_path, exist_ok=True)
-
-    if "tokenizer.model" not in os.listdir(output_path):
-        shutil.copy(os.path.join(args.tokenizer_path, "tokenizer.model"), args.output_path)
-
-    model_path, tokenizer_path, output_path = os.path.join(args.tokenizer_path, args.model), os.path.join(
-        args.output_path, "tokenizer.model"), output_path
-
-    checkpoints = sorted(Path(model_path).glob("*.pth"))
-    params = hiq.read_file(Path(model_path) / "params.json",as_json=True)
-    model_args = ModelArgs(
-        max_seq_len=2048,
-        max_batch_size=1,
-        **params
-    )
-
+    cks = sorted(Path(args.ckpt_dir).glob("*.pth"))
+    params = hiq.read_file(Path(args.ckpt_dir) / "params.json",as_json=True)
+    model_args = ModelArgs(max_seq_len=2048, max_batch_size=args.max_batch_size, **params)
     tokenizer = Tokenizer(model_path=tokenizer_path)
     model_args.vocab_size = tokenizer.n_words
 
     torch.set_default_tensor_type(torch.HalfTensor)
+    print(f"⌛️ Loading model...Thank you for your patience...")
     model = Transformer(model_args)
     torch.set_default_tensor_type(torch.FloatTensor)
-
-    key_to_dim = {"w1": 0, "w2": -1, "w3": 0, "wo": -1, "wq": 0, "wk": 0, "wv": 0, "output": 0, "tok_embeddings": -1,
-                  "ffn_norm": None, "attention_norm": None, "norm": None, "rope": None}
-
     dt = {}
-
-    for i, ckpt in tqdm(enumerate(checkpoints), total=len(checkpoints)):
-        checkpoint = torch.load(ckpt, map_location="cpu")
-        for parameter_name, parameter in model.named_parameters():
-            if parameter_name not in dt:
-                dt[parameter_name] = torch.zeros_like(parameter, device="cpu")
-            short_name = parameter_name.split(".")[-2]
-            if key_to_dim[short_name] is None and i == 0:
-                dt[parameter_name] = checkpoint[parameter_name]
-            elif key_to_dim[short_name] == 0:
-                size = checkpoint[parameter_name].size(0)
-                dt[parameter_name][size * i: size * (i + 1), :] = checkpoint[
-                    parameter_name
-                ]
-            elif key_to_dim[short_name] == -1:
-                size = checkpoint[parameter_name].size(-1)
-                dt[parameter_name][:, size * i: size * (i + 1)] = checkpoint[
-                    parameter_name
-                ]
-            del checkpoint[parameter_name]
-        del checkpoint
-    hiq.write_file(os.path.join(output_path, "params.json"), json.dumps(params, indent=4))
-    torch.save(dt, os.path.join(output_path, "state_dict.pt"))
+    print(f"⌛️ Converting model...Thank you for your patience...")
+    for i, ckpt in tqdm(enumerate(cks), total=len(cks)):
+        ck = torch.load(ckpt, map_location="cpu")
+        for nm, pm in model.named_parameters():
+            if nm not in dt:
+                dt[nm] = torch.zeros_like(pm, device="cpu")
+            short_name = nm.split(".")[-2]
+            if META_KEY_TO_DIM[short_name] is None and i == 0:
+                dt[nm] = ck[nm]
+            elif META_KEY_TO_DIM[short_name] == 0:
+                size = ck[nm].size(0)
+                dt[nm][size * i: size * (i + 1), :] = ck[nm]
+            elif META_KEY_TO_DIM[short_name] == -1:
+                size = ck[nm].size(-1)
+                dt[nm][:, size * i: size * (i + 1)] = ck[nm]
+    hiq.write_file(os.path.join(output_dir, "params.json"), json.dumps(params, indent=4))
+    torch.save(dt, os.path.join(output_dir, "state_dict.pt"))
 
 
-def convert_llama_hf():
+def convert_llama_hf(args):
+    write_model(
+        model_path=os.path.join(
+            args.output_dir, "llama-{}".format(args.model_size).lower()
+        ),
+        input_base_path=args.ckpt_dir,
+        model_size=args.model_size,
+    )
+    write_tokenizer(
+        tokenizer_path=os.path.join(args.output_dir, "tokenizer"),
+        input_tokenizer_path=tokenizer_path,
+    )
+
+def get_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--ckpt_dir", type=str, default="/llama_data/7B")
     parser.add_argument(
-        "--input_dir",
-        help="Location of LLaMA weights, which contains tokenizer.model and model folders",
+        "--tokenizer_path", type=str, default="/llama_data/tokenizer.model"
     )
     parser.add_argument(
         "--model_size",
@@ -377,19 +363,19 @@ def convert_llama_hf():
         "--output_dir",
         help="Location to write HF model and tokenizer",
     )
-    args = parser.parse_args()
-    write_model(
-        model_path=os.path.join(
-            args.output_dir, "llama-{}".format(args.model_size).lower()
-        ),
-        input_base_path=os.path.join(args.input_dir, args.model_size),
-        model_size=args.model_size,
+    parser.add_argument(
+        "--max_batch_size", type=int, default=2
     )
-    write_tokenizer(
-        tokenizer_path=os.path.join(args.output_dir, "tokenizer"),
-        input_tokenizer_path=os.path.join(args.input_dir, "tokenizer.model"),
-    )
+    parser.add_argument("--to", choices={"fb", "hf"})
+    return parser.parse_args()
+    
 
 
 if __name__ == "__main__":
-    convert_llama_meta()
+    args = get_args()
+    if args.to == "hf":
+        convert_llama_hf(args)
+    elif args.to == "fb":
+        convert_llama_fb(args)
+    else:
+        print(f"wrong argument: {args.to}")

@@ -191,6 +191,8 @@ $ python web_server_single.py  --ckpt_dir $CKPT_DIR --tokenizer_path $TOKENIZER_
 
 ## 🍒 Multiple GPU Inference
 
+### 🧘‍♀️ Official Way
+
 The provided `example.py` can be run on a single or multi-gpu node with `torchrun` and will output completions for two pre-defined prompts. Using `TARGET_FOLDER` as defined in `download.sh`:
 
 ```bash
@@ -206,7 +208,41 @@ Different models require different MP values:
 | 30B    | 4  |
 | 65B    | 8  |
 
+### 🐒 Community Way
 
+There are two steps to run LLaMA in multi-GPUe evironment.
+
+- Convert original LLaMA model
+
+```bash
+$python -m llama.convert_llama --help
+usage: convert_llama.py [-h] [--ckpt_dir CKPT_DIR] [--tokenizer_path TOKENIZER_PATH] [--model_size {7B,13B,30B,65B}]
+                        [--output_dir OUTPUT_DIR] [--max_batch_size MAX_BATCH_SIZE] [--to {hf,fb}]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --ckpt_dir CKPT_DIR
+  --tokenizer_path TOKENIZER_PATH
+  --model_size {7B,13B,30B,65B}
+  --output_dir OUTPUT_DIR
+                        Location to write HF model and tokenizer
+  --max_batch_size MAX_BATCH_SIZE
+  --to {hf,fb}
+```
+
+- Run with HF's accelerate with multiple GPUs
+
+```bash
+$python -m llama.llama_multigpu --help
+usage: llama_multigpu.py [-h] [--state_dict_dir STATE_DICT_DIR] [--model_size {7B,13B,30B,65B}]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --state_dict_dir STATE_DICT_DIR
+  --model_size {7B,13B,30B,65B}
+```
+
+![](docs/llama_multigpu.png)
 
 
 ## 🧬 LLaMA model structure

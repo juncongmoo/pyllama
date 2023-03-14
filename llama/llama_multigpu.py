@@ -4,23 +4,24 @@ import torch
 from accelerate import init_empty_weights, load_checkpoint_and_dispatch
 from tqdm import tqdm
 from pathlib import Path
+import hiq
 import os
 from llama import ModelArgs, Tokenizer, Transformer, LLaMA
 
+NUM_SHARDS = {
+    "7B": 1,
+    "13B": 2,
+    "30B": 4,
+    "65B": 8,
+}
+
 class LLaMAInference:
-    def __init__(self, llama_path, model, device_map="auto", **kwargs):
+    def __init__(self, state_dict_dir, model_size, device_map="auto", **kwargs):
 
-        state_dict = os.path.join(llama_path, model, "state_dict.pth")
-        params_file = os.path.join(llama_path, model, "params.json")
-        tokenizer_path = os.path.join(llama_path, "tokenizer.model")
-
-        assert os.path.exists(os.path.join(llama_path, model)), f"Model {model} does not exist"
-        assert os.path.exists(state_dict), f"Model {model} does not exist"
-        assert os.path.exists(params_file), f"Model {model} does not exist"
-        assert os.path.exists(tokenizer_path), f"Missing tokenizer in {llama_path}"
-
-        with open(params_file, "r") as f:
-            params = json.load(f)
+        state_dict = os.path.join(state_dict_dir, model_size, "state_dict.pt")
+        params_file = os.path.join(state_dict_dir, model_size, "params.json")
+        tokenizer_path = os.path.join(state_dict_dir, "tokenizer.model")
+        params = hiq.read_file(params_file, as_json=True)
 
         model_args = dict(
             max_seq_len=2048,
@@ -62,13 +63,24 @@ def get_args():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ckpt_dir", type=str, default="/llama_data/7B")
+    parser.add_argument("--state_dict_dir", type=str, default="/llama_data/7B")
     parser.add_argument(
-        "--tokenizer_path", type=str, default="/llama_data/tokenizer.model"
+        "--model_size",
+        choices=NUM_SHARDS.keys(),
     )
     return parser.parse_args()
 
 if __name__ == "__main__":
-  args = get_args()
-  i = LLaMAInference(llama_path, "65B")
-  print(i.generate(["My name is Federico"]))
+    args = get_args()
+    i = LLaMAInference(args.state_dict_dir, args.model_size)
+    results = i.generate(["The meaning of life is"])
+    for result in results:
+        print("🦙LLaMA:", result.strip())
+  
+  
+    results = i.generate(["Question: why apple drops from the tree when it is ripe?\nAnswer:"],
+                          stop_words=["Question"])
+    for result in results:
+        print("🦙LLaMA:", result.strip())
+
+
