@@ -1,4 +1,4 @@
-# 🦙 LLaMA - Run LLM in A Single GPU
+# 🦙 LLaMA - Run LLM in A Single 4GB GPU
 
 
 > 📢 `pyllama` is a hacked version of `LLaMA` based on original Facebook's implementation but more convenient to run in a Single consumer grade GPU.
