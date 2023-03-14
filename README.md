@@ -52,9 +52,10 @@ usage: download.py [-h] [--model_size MODEL_SIZE] [--folder FOLDER]
 optional arguments:
   -h, --help            show this help message and exit
   --model_size MODEL_SIZE
-                        The size of the models that you want to download. A comma separated string of 
-                        any of "7B", "13B", "30B", "65B". Totally 219G disk space is needed to 
-                        download them all. If you only want to download the 7B one, just put "7B" here.
+                        The size of the models that you want to download. A comma separated
+                        string of any of "7B", "13B", "30B", "65B". Totally 219G disk space
+                        is needed to download them all. If you only want to download the 7B
+                        model, just put "7B" here.
   --folder FOLDER       The target folder for the download files
 ```
 
