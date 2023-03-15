@@ -204,10 +204,19 @@ $ python web_server_single.py  --ckpt_dir $CKPT_DIR --tokenizer_path $TOKENIZER_
 
 ### 🧘‍♀️ Official Way
 
+To use the original META's model parallel, please set environment variable `PYLLAMA_META_MP` like:
+
+```
+export PYLLAMA_META_MP=1
+```
+
+With this environment variable set, you can `import llama` and the original META version's llama will be imported.
+
 The provided `example.py` can be run on a single or multi-gpu node with `torchrun` and will output completions for two pre-defined prompts. Using `TARGET_FOLDER` as defined in `download.sh`:
 
 ```bash
-torchrun --nproc_per_node MP example.py --ckpt_dir $TARGET_FOLDER/model_size --tokenizer_path $TARGET_FOLDER/tokenizer.model
+torchrun --nproc_per_node MP example.py --ckpt_dir $TARGET_FOLDER/model_size \
+  --tokenizer_path $TARGET_FOLDER/tokenizer.model
 ```
 
 Different models require different MP values:
@@ -221,14 +230,15 @@ Different models require different MP values:
 
 ### 🐒 Community Way
 
-There are two steps to run LLaMA in multi-GPUe evironment.
+There are two steps to run LLaMA in multi-GPU environment.
 
 - Convert original LLaMA model
 
 ```bash
 $python -m llama.convert_llama --help
-usage: convert_llama.py [-h] [--ckpt_dir CKPT_DIR] [--tokenizer_path TOKENIZER_PATH] [--model_size {7B,13B,30B,65B}]
-                        [--output_dir OUTPUT_DIR] [--max_batch_size MAX_BATCH_SIZE] [--to {hf,fb}]
+usage: convert_llama.py [-h] [--ckpt_dir CKPT_DIR] [--tokenizer_path TOKENIZER_PATH]
+                        [--model_size {7B,13B,30B,65B}] [--output_dir OUTPUT_DIR]
+                        [--max_batch_size MAX_BATCH_SIZE] [--to {hf,fb}]
 
 optional arguments:
   -h, --help            show this help message and exit
