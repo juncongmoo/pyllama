@@ -1,7 +1,7 @@
 #!/bin/bash
 # UPDATE from Shawn (Mar 5 @ 2:43 AM)
 
-echo "resume download is supported, so you can ctrl-c and rerun the program to resume the downloading"
+echo "❤️ Resume download is supported. You can ctrl-c and rerun the program to resume the downloading"
 
 PRESIGNED_URL="https://agi.gpt4.org/llama/LLaMA/*"
 
