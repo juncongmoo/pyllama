@@ -3,7 +3,7 @@
 
 > 📢 `pyllama` is a hacked version of `LLaMA` based on original Facebook's implementation but more convenient to run in a Single consumer grade GPU.
 
-> 🔥 In order to download the checkpoints and tokenizer, use this BitTorrent link: "[magnet:?xt=urn:btih:ZXXDAUWYLRUXXBHUYEMS6Q5CE5WA3LVA&dn=LLaMA](magnet:?xt=urn:btih:ZXXDAUWYLRUXXBHUYEMS6Q5CE5WA3LVA&dn=LLaMA)".
+> The Hugging Face's LLaMA implementation is available at `pyllama.hf`.
 
 ## 📥 Installation
 
@@ -25,6 +25,8 @@ Once your request is approved, you will receive links to download the tokenizer 
 Edit the `download.sh` script with the signed url provided in the email to download the model weights and tokenizer.
 
 ### 🐒 Community Way
+
+- 1. pyllama
 
 There is another high-speed way to download the checkpoints and tokenizers. There are four models(7B,13B,30B,65B) available. To download all of them, run:
 
@@ -62,6 +64,11 @@ optional arguments:
 - Sample Screenshot
 
 ![](docs/download.png)
+
+- 2. Bittorrent
+
+🔥 In order to download the checkpoints and tokenizer, use this BitTorrent link: "[magnet:?xt=urn:btih:ZXXDAUWYLRUXXBHUYEMS6Q5CE5WA3LVA&dn=LLaMA](magnet:?xt=urn:btih:ZXXDAUWYLRUXXBHUYEMS6Q5CE5WA3LVA&dn=LLaMA)".
+
 
 ## 💎 Quantize LLaMA to run in a 4GB GPU
 
@@ -248,6 +255,13 @@ optional arguments:
 
 ![](docs/llama_multigpu.png)
 
+## 🔬 Model Fine Tuning
+
+### With [Standford Alpaca](https://github.com/tatsu-lab/stanford_alpaca) Instruction-Following Dataset
+
+- Tokenization
+- Finetuning
+- Efficient FT
 
 ## 🧬 LLaMA model structure
 
@@ -257,10 +271,6 @@ optional arguments:
 ```
 https://github.com/facebookresearch/llama/blob/main/llama/model.py#LL127C27-L127C27
 ```
-
-## 🔬 Model Training & Fine Tuning
-
-- TODO
 
 ### Model Card
 
