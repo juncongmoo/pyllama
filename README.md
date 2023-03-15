@@ -59,6 +59,10 @@ optional arguments:
   --folder FOLDER       The target folder for the download files
 ```
 
+- Sample Screenshot
+
+![](docs/download.png)
+
 ## 💎 Quantize LLaMA to run in a 4GB GPU
 
 `pyllama` support quantization of 2/3/4/8/16-bit so that you can run model in a 4G memory GPU.

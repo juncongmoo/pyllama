@@ -34,7 +34,7 @@ do
     mkdir -p ${TARGET_FOLDER}"/${i}"
     for s in $(seq -f "0%g" 0 ${N_SHARD_DICT[$i]})
     do
-        echo running: wget --continue --progress=bar:force ${PRESIGNED_URL/'*'/"${i}/consolidated.${s}.pth"} -O ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth"
+        #echo running: wget --continue --progress=bar:force ${PRESIGNED_URL/'*'/"${i}/consolidated.${s}.pth"} -O ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth"
         echo "downloading file to" ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth" ...please wait for a few minutes ...
         wget --continue --progress=bar:force ${PRESIGNED_URL/'*'/"${i}/consolidated.${s}.pth"} -O ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth"
         echo ✅ ${TARGET_FOLDER}"/${i}/consolidated.${s}.pth"
