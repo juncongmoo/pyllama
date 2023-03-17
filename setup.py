@@ -44,13 +44,12 @@ def package_files(ds):
     for d in ds:
         for path, directories, filenames in os.walk(d):
             for filename in filenames:
-                if "__pycache__" not in str(filename):
+                if "__pycache__" not in str(filename) and not filename.endswith('.pyc'):
                     paths.append(str(os.path.join(path, filename))[len("llama/") :])
     return paths
 
 
 extra_files = package_files(["llama/"])
-
 
 setup(
     name="pyllama",
@@ -61,8 +60,7 @@ setup(
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     install_requires=r_basic,
-    package_data={"pyllama": extra_files},
-    zip_safe=False,
+    package_data={"llama": extra_files},
     include_package_data=True,
     keywords=[
         "LLaMA",

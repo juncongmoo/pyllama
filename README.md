@@ -157,11 +157,11 @@ With quantization, you can run LLaMA with a 4GB memory GPU.
 
 - pyllama can run 7B model with 6GB GPU memory.
 
-![4bit-quant-6GB](docs/pyllama_7B_6GB.png)
+![4bit-quant-6GB](https://github.com/juncongmoo/pyllama/blob/main/docs/pyllama_7B_6GB.png)
 
 - pyllama can run 7B model with 3.2GB GPU memory.
 
-![2bit-quant-6GB](docs/pyllama_7B_3GB.png)
+![2bit-quant-6GB](https://github.com/juncongmoo/pyllama/blob/main/docs/pyllama_7B_3GB.png)
 
 ### 💡 Tips
 
@@ -263,7 +263,7 @@ optional arguments:
   --model_size {7B,13B,30B,65B}
 ```
 
-![](docs/llama_multigpu.png)
+![](https://github.com/juncongmoo/pyllama/blob/main/docs/llama_multigpu.png)
 
 ## 🔬 Model Fine Tuning
 

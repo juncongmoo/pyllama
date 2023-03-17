@@ -215,7 +215,7 @@ def llama_pack(model, quantizers, wbits):
     return model
 
 
-def load_quant(model, checkpoint, wbits, seqlen=1024):
+def load_quant(model, checkpoint, wbits, seqlen=1024, for_infer=True):
     """
     seqlen - seqlen refers to the maximum length of the input sequence that the model can process. The input sequence can be a sequence of words, tokens, or characters, depending on how the model is tokenized. The seqlen parameter is important because it determines the amount of memory that the model requires to process the input sequence. If the input sequence is too long, it may exceed the memory capacity of the model, leading to out-of-memory errors or slower inference times. In order to handle longer sequences, some models use techniques such as attention masking or truncation, which allow the model to process only a portion of the input sequence at a time. The seqlen parameter determines the maximum length of the input sequence that can be processed in a single step. If the input sequence is longer than the seqlen parameter, it may need to be split into multiple segments and processed separately.
     """
@@ -229,7 +229,8 @@ def load_quant(model, checkpoint, wbits, seqlen=1024):
     torch.set_default_dtype(torch.half)
     model = LLaMAForCausalLM(config)
     torch.set_default_dtype(torch.float)
-    model = model.eval()
+    if for_infer:
+        model = model.eval()
     layers = find_layers(model)
     for name in ["lm_head"]:
         if name in layers:
