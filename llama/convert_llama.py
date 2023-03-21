@@ -346,7 +346,7 @@ def convert_llama_hf(args):
     )
     write_tokenizer(
         tokenizer_path=os.path.join(args.output_dir, "tokenizer"),
-        input_tokenizer_path=tokenizer_path,
+        input_tokenizer_path=args.tokenizer_path,
     )
 
 def get_args():
