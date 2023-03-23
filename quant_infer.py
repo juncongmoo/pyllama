@@ -6,8 +6,8 @@ def main():
     driver = hiq.HiQLatency(
         hiq_table_or_path=[
           ["llama.llama_infer", "", "run", "run_quant"],
-          ["llama.llama_infer", "AutoTokenizer", "from_pretrained", "from_pretrained"],
-          ["transformers.models.llama.tokenization_llama", "LLaMATokenizer", "encode", "encode"],
+          ["llama.llama_infer", "LLaMATokenizer", "from_pretrained", "from_pretrained"],
+          ["llama.hf", "LLaMATokenizer", "encode", "encode"],
           ["llama.llama_infer", "", "load_quant", "load_quant"],
           ["llama.hf.modeling_llama","LLaMAForCausalLM","generate","generate"]
         ],

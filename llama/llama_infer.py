@@ -1,6 +1,6 @@
 import torch
 
-from transformers import AutoTokenizer
+from llama.hf import LLaMATokenizer
 from llama.hf.utils import get_llama
 from llama.llama_quant import load_quant
 
@@ -72,7 +72,7 @@ def run(args=None):
         dev = torch.device("cpu")
 
     model.to(dev)
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    tokenizer = LLaMATokenizer.from_pretrained(args.model)
     input_ids = tokenizer.encode(args.text, return_tensors="pt").to(dev)
 
     with torch.no_grad():
