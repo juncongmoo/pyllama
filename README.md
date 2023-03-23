@@ -72,7 +72,7 @@ optional arguments:
 
 ## 💎 Quantize LLaMA to run in a 4GB GPU
 
-`pyllama` support quantization of 2/3/4/8/16-bit so that you can run model in a 4G memory GPU.
+`pyllama` support quantization of 2/3/4/8-bit so that you can run model in a 4G memory GPU.
 
 > You need to run `export HUGGING_FACE_HUB_TOKEN=XXX` to be able to access Hugging Face's data. You also need to install [gptq](https://pypi.org/project/gptq/) with command `pip install gptq`.
 
@@ -96,7 +96,7 @@ optional arguments:
   --nsamples NSAMPLES   Number of calibration data samples.
   --percdamp PERCDAMP   Percent of the average Hessian diagonal to use for dampening.
   --nearest             Whether to run the RTN baseline.
-  --wbits {2,3,4,8,16}  bits for quauntization
+  --wbits {2,3,4,8}  bits for quauntization
   --groupsize GROUPSIZE
                         Groupsize to use for quantization; default uses full row.
   --save SAVE           Save quantized checkpoint under this name, eg pyllama-7B4b.pt.
@@ -112,6 +112,12 @@ optional arguments:
 
 ```bash
 python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --wbits 8 --save pyllama-7B8b.pt
+```
+
+- Quantize 7B model to 4-bit with groupsize 128 (the recommended setup 🔥)
+
+```bash
+python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --wbits 4 --groupsize 128 --save pyllama-7B4b.pt
 ```
 
 - Quantize 7B model to 2-bit
@@ -130,10 +136,14 @@ The download links for quantized LLaMA files are below:
 | 3-bit |  - | - | -|- |-|
 | 4-bit |  3779485819 | - | cce9a3b522ddf5c011ee0174b2ff3dfb|- |-|
 | 8-bit |  7017493231 | - | 2648b09597cf8f9e0d1a04cb70b71cab|- |-|
-| 16-bit |  - | - | -|- |-|
-| 32-bit |  - | - | -|- |-|
+
 
 It took me 2 hours 40 mins to quantize the 65B model to 4bit. The file size is reduced from 122GB to 32GB.
+
+> The following suggestions are recommended for LLM qunatization:
+> 1. By default, use 4-bit quantization for LLM inference as it offers the total model bits and zero-shot accuracy trade-offs.
+> 2. Use a block size of 128 or lower to stabilize 4-bit quantization and improve zero-shot performance.
+> 3. Use a floating point or quantile quantization data type. In some cases, integer data types might be preferable to improve inference latency depending on the implementation and hardware support.
 
 ## 🔮 Single GPU Inference
 

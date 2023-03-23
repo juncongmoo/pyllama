@@ -13,8 +13,7 @@ from gptq import (
     quantize,
 )
 
-from llama.hf.modeling_llama import LLaMAForCausalLM
-from llama.hf.configuration_llama import LLaMAConfig
+from llama.hf import LLaMAForCausalLM, LLaMATokenizer, LLaMAConfig
 from llama.hf.utils import avoid_tensor_modified, get_llama
 
 
@@ -67,17 +66,17 @@ def llama_sequential(model, dataloader, args, dev):
     for i in range(len(layers)):
         layer = layers[i].to(dev)
         subset = find_layers(layer)
-        gptq = {}
+        name_to_gptq = {}
         for name in subset:
-            gptq[name] = GPTQ(subset[name])
-            gptq[name].quantizer = Quantizer()
-            gptq[name].quantizer.configure(
+            name_to_gptq[name] = GPTQ(subset[name])
+            name_to_gptq[name].quantizer = Quantizer()
+            name_to_gptq[name].quantizer.configure(
                 args.wbits, perchannel=True, sym=False, mse=False
             )
 
         def add_batch(name):
             def tmp(_, inp, out):
-                gptq[name].add_batch(inp[0].data, out.data)
+                name_to_gptq[name].add_batch(inp[0].data, out.data)
 
             return tmp
 
@@ -91,15 +90,15 @@ def llama_sequential(model, dataloader, args, dev):
         print(f"\nQuantize layer: {i} ", end=',')
         for name in subset:
             print(name, end=",")
-            gptq[name].fasterquant(percdamp=args.percdamp, groupsize=args.groupsize)
-            quantizers["model.layers.%d.%s" % (i, name)] = gptq[name].quantizer
-            gptq[name].free()
+            name_to_gptq[name].fasterquant(percdamp=args.percdamp, groupsize=args.groupsize)
+            quantizers["model.layers.%d.%s" % (i, name)] = name_to_gptq[name].quantizer
+            name_to_gptq[name].free()
         for j in range(args.nsamples):
             outs[j] = layer(inps[j].unsqueeze(0), attention_mask=attention_mask)[0]
 
         layers[i] = layer.cpu()
         del layer
-        del gptq
+        del name_to_gptq
         torch.cuda.empty_cache()
 
         inps, outs = outs, inps
@@ -215,16 +214,15 @@ def llama_pack(model, quantizers, wbits):
     return model
 
 
-def load_quant(model, checkpoint, wbits, seqlen=1024, for_infer=True):
+def load_quant(model_name, checkpoint, wbits, seqlen=1024, for_infer=True):
     """
     seqlen - seqlen refers to the maximum length of the input sequence that the model can process. The input sequence can be a sequence of words, tokens, or characters, depending on how the model is tokenized. The seqlen parameter is important because it determines the amount of memory that the model requires to process the input sequence. If the input sequence is too long, it may exceed the memory capacity of the model, leading to out-of-memory errors or slower inference times. In order to handle longer sequences, some models use techniques such as attention masking or truncation, which allow the model to process only a portion of the input sequence at a time. The seqlen parameter determines the maximum length of the input sequence that can be processed in a single step. If the input sequence is longer than the seqlen parameter, it may need to be split into multiple segments and processed separately.
     """
     import transformers
 
-    config = LLaMAConfig.from_pretrained(model)
+    config = LLaMAConfig.from_pretrained(model_name)
     avoid_tensor_modified()
 
-    torch.set_default_dtype(torch.half)
     transformers.modeling_utils._init_weights = False
     torch.set_default_dtype(torch.half)
     model = LLaMAForCausalLM(config)
@@ -435,12 +433,16 @@ def run(args=None):
     else:
         dev = torch.device("cpu")
 
+    tokenizer = LLaMATokenizer.from_pretrained(
+        args.model, add_eos_token=True
+    )
     dataloader, testloader = get_loaders(
         args.dataset,
         nsamples=args.nsamples,
         seed=args.seed,
         model=args.model,
         seqlen=model.seqlen,
+        tokenizer=tokenizer
     )
 
     if not args.load and args.wbits < 16 and not args.nearest:
@@ -465,7 +467,7 @@ def run(args=None):
     if args.eval:
         for dataset in ["wikitext2", "ptb", "c4"]:
             dataloader, testloader = get_loaders(
-                dataset, seed=args.seed, model=args.model, seqlen=model.seqlen
+                dataset, seed=args.seed, model=args.model, seqlen=model.seqlen, tokenizer=tokenizer
             )
             print(dataset)
             llama_eval(model, testloader, args, dev)
