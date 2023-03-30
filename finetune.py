@@ -92,11 +92,24 @@ torch.set_default_dtype(torch.float)
 #print(model_ori)
 print("*"*80)
 #import pudb; pu.db
-model = load_quant(model_ori, "pyllama-7B4b.pt", 4, ['lm_head'],seqlen=1024, for_infer=True, dev=torch.device('cuda:0'), verbose=1)
+model = load_quant(model_ori, "pyllama-7B4b-torch1.13.1.pt", 4, ['lm_head'],
+                    seqlen=1024, for_infer=True, dev=torch.device('cuda:0'), verbose=1)
 """
 from llama.llama_quant import load_quant
 model = load_quant(hf_model_name, "pyllama-7B4b.pt", 4, seqlen=1024, for_infer=True, dev=torch.device('cuda:0'))
 """
+
+training_args = transformers.TrainingArguments(
+    per_device_train_batch_size=MICRO_BATCH_SIZE,
+    gradient_accumulation_steps=2, # GRADIENT_ACCUMULATION_STEPS,
+    warmup_steps=100,
+    num_train_epochs=EPOCHS,
+    learning_rate=LEARNING_RATE,
+    fp16=True,
+    logging_steps=20,
+    output_dir="lora-alpaca",
+    save_total_limit=3,
+)
 
 model.is_loaded_in_8bit = True
 model._is_int8_training_enabled = True
@@ -113,6 +126,12 @@ tokenizer = LLaMATokenizer.from_pretrained(hf_model_name, add_eos_token=True)
 
 model = prepare_model_for_int4_training(model)
 
+import pudb; pu.db
+print("o"*80)
+print(model.model.layers[0].self_attn.q_proj.scales)
+print(model.model.layers[0].self_attn.q_proj.zeros)
+print(model.model.layers[0].self_attn.q_proj.bias)
+print("o"*80)
 
 config = LoraConfig(
     r=LORA_R,
@@ -122,11 +141,21 @@ config = LoraConfig(
     bias="none",
     task_type="CAUSAL_LM",
 )
+
+import pudb; pu.db
 model = get_peft_model(model, config)
+print("o"*80)
+print(model.base_model.model.model.layers[0].self_attn.q_proj.scales)
+print(model.base_model.model.model.layers[0].self_attn.q_proj.zeros)
+print(model.base_model.model.model.layers[0].self_attn.q_proj.bias)
+print("o"*80)
+
+
 tokenizer.pad_token_id = 0  # unk. we want this to be different from the eos token
 data = load_dataset("json", data_files="dataset/alpaca_data.json")
 
 model.print_trainable_parameters()
+
 
 
 def generate_prompt(data_point):
@@ -174,7 +203,7 @@ device = torch.device('cuda:0')
 for name, param in model.named_parameters():
     if param.requires_grad:
         param.data = param.data.to(device)
-        
+
 for name, buffer in model.named_buffers():
     buffer.data = buffer.data.to(device)
 
@@ -182,17 +211,7 @@ for name, buffer in model.named_buffers():
 trainer = transformers.Trainer(
     model=model,
     train_dataset=data["train"],
-    args=transformers.TrainingArguments(
-        per_device_train_batch_size=MICRO_BATCH_SIZE,
-        gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
-        warmup_steps=100,
-        num_train_epochs=EPOCHS,
-        learning_rate=LEARNING_RATE,
-        fp16=True,
-        logging_steps=20,
-        output_dir="lora-alpaca",
-        save_total_limit=3,
-    ),
+    args=training_args,
     data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
 )
 model.config.use_cache = False

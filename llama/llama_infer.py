@@ -1,9 +1,9 @@
-import torch
+import torch, transformers
 
 from llama.hf import LLaMATokenizer
 from llama.hf.utils import get_llama
-from llama.llama_quant import load_quant
-
+from gptq import load_quant, avoid_tensor_modified
+from llama.hf import LLaMAForCausalLM, LLaMAConfig, LLaMATokenizer
 
 def get_args():
     import argparse
@@ -62,7 +62,17 @@ def get_args():
 def run(args=None):
     args = args or get_args()
     if args.load:
-        model = load_quant(args.model, args.load, args.wbits, args.seqlen)
+        config = LLaMAConfig.from_pretrained(args.model)
+        avoid_tensor_modified()
+        transformers.modeling_utils._init_weights = False
+        torch.set_default_dtype(torch.half)
+        model_ori = LLaMAForCausalLM(config)
+        torch.set_default_dtype(torch.float)
+        print(model_ori)
+        print("*"*80)
+        #import pudb; pu.db
+        model = load_quant(model_ori, args.load, args.wbits, ['lm_head'],seqlen=1024, for_infer=True, dev=torch.device('cuda:0'), verbose=1)
+        #model = load_quant(args.model, args.load, args.wbits, args.seqlen)
     else:
         model = get_llama(args.model)
         model.eval()
