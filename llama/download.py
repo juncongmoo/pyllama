@@ -14,7 +14,7 @@ def download(args=None):
             cmd += f" {args.model_size}"
         if args.folder:
             cmd += f" {args.folder}"
-    retcode = hiq.execute_cmd(cmd, verbose=False, shell=True, runtime_output=True)
+    retcode = hiq.execute_cmd(cmd, verbose=False, shell=True, runtime_output=True, env=os.environ)
     if retcode != 0:
         # retry
         download(args)
