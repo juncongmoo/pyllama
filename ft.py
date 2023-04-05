@@ -2,18 +2,17 @@ import os
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
-import torch.nn as nn
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 import transformers
-from transformers import AutoTokenizer, AutoConfig
+from transformers import AutoConfig
 from llama.hf import LLaMAForCausalLM, LLaMAConfig, LLaMATokenizer
 
 from peft import prepare_model_for_int8_training, LoraConfig, get_peft_model
 from gptq import load_quant, avoid_tensor_modified
 import torch.optim as optim
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
-
+from hiq.vis import print_model
 
 # optimized for RTX 4090. for larger GPUs, increase some of these?
 MICRO_BATCH_SIZE = 4  # this could actually be 5 but i like powers of 2
@@ -84,17 +83,21 @@ transformers.modeling_utils._init_weights = False
 torch.set_default_dtype(torch.half)
 model_ori = LLaMAForCausalLM(config)
 torch.set_default_dtype(torch.float)
+
+print_model(model_ori, keep_non_params=True, expand_params=True)
+
 #print(model_ori)
 print("*"*80)
 #import pudb; pu.db
-model = load_quant(model_ori, "pyllama-7B4b-torch1.13.1.pt", 4, ['lm_head'],
+model = load_quant(model_ori, "pyllama-7B4b.2.0.0+cu118.pt", 4, ['lm_head'],
                     seqlen=1024, for_infer=True, dev=torch.device('cuda:0'), verbose=1)
 """
 from llama.llama_quant import load_quant
 model = load_quant(hf_model_name, "pyllama-7B4b.pt", 4, seqlen=1024, for_infer=True, dev=torch.device('cuda:0'))
 """
+import pudb; pu.db
 
-
+print_model(model, keep_non_params=True, expand_params=True)
 
 model.is_loaded_in_8bit = True
 model._is_int8_training_enabled = True

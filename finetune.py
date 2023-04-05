@@ -1,41 +1,41 @@
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+import json
 import os
+import os.path as osp
+from typing import Union
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
 import torch.nn as nn
-from datasets import load_dataset
 import transformers
-from transformers import AutoTokenizer, AutoConfig
-from llama.hf import LLaMAForCausalLM, LLaMAConfig, LLaMATokenizer
+from datasets import load_dataset
+from gptq import avoid_tensor_modified, load_quant
+from hiq.vis import print_model
+from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
+from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
+from transformers import AutoConfig, AutoTokenizer
 
-from peft import prepare_model_for_int8_training, LoraConfig, get_peft_model
-from gptq import load_quant, avoid_tensor_modified
+from llama.hf import LLaMAConfig, LLaMAForCausalLM, LLaMATokenizer
 
 # optimized for RTX 4090. for larger GPUs, increase some of these?
-MICRO_BATCH_SIZE = 4  # this could actually be 5 but i like powers of 2
+MICRO_BATCH_SIZE = 16  # this could actually be 5 but i like powers of 2
 BATCH_SIZE = 128
 GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
 EPOCHS = 3  # we don't need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
 CUTOFF_LEN = 256  # 256 accounts for about 96% of the data
-LORA_R = 8
+LORA_R = 64
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
 
 
-def prepare_model_for_int2_training():
-    pass
-
-def prepare_model_for_int3_training():
-    pass
-
-def prepare_model_for_int5_training():
-    pass
-
-def prepare_model_for_int4_training(model,
-                                    output_embedding_layer_name="lm_head",
-                                    use_gradient_checkpointing=True,
-                                    layer_norm_names=["layer_norm"]
+def prepare_model_for_int4_training(
+    model,
+    output_embedding_layer_name="lm_head",
+    use_gradient_checkpointing=True,
+    layer_norm_names=["layer_norm"],
 ):
     r"""
     This method wrapps the entire protocol for preparing a model before running a training. This includes:
@@ -53,15 +53,19 @@ def prepare_model_for_int4_training(model,
         param.requires_grad = False
         if 1:
             # cast layer norm in fp32 for stability for 8bit models
-            if param.ndim == 1 and any(layer_norm_name in name for layer_norm_name in layer_norm_names):
+            if param.ndim == 1 and any(
+                layer_norm_name in name for layer_norm_name in layer_norm_names
+            ):
                 param.data = param.data.to(torch.float32)
     if loaded_in_8bit and use_gradient_checkpointing:
         # For backward compatibility
         if hasattr(model, "enable_input_require_grads"):
             model.enable_input_require_grads()
         else:
+
             def make_inputs_require_grad(module, input, output):
                 output.requires_grad_(True)
+
             model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
         # enable gradient checkpointing for memory efficiency
         model.gradient_checkpointing_enable()
@@ -69,16 +73,22 @@ def prepare_model_for_int4_training(model,
     if hasattr(model, output_embedding_layer_name):
         output_embedding_layer = getattr(model, output_embedding_layer_name)
         input_dtype = output_embedding_layer.weight.dtype
+
         class CastOutputToFloat(torch.nn.Sequential):
             r"""
             Manually cast to the expected dtype of the lm_head as sometimes there is a final layer norm that is casted
             in fp32
             """
-            def forward(self, x):
-                return super().forward(x.to(input_dtype)).to(torch.float32)
-        setattr(model, output_embedding_layer_name, CastOutputToFloat(output_embedding_layer))
-    return model
 
+            def forward(self, z_):
+                return super().forward(z_.to(input_dtype)).to(torch.float32)
+
+        setattr(
+            model,
+            output_embedding_layer_name,
+            CastOutputToFloat(output_embedding_layer),
+        )
+    return model
 
 
 hf_model_name = "decapoda-research/llama-7b-hf"
@@ -89,33 +99,30 @@ transformers.modeling_utils._init_weights = False
 torch.set_default_dtype(torch.half)
 model_ori = LLaMAForCausalLM(config)
 torch.set_default_dtype(torch.float)
-#print(model_ori)
-print("*"*80)
-#import pudb; pu.db
-model = load_quant(model_ori, "pyllama-7B4b-torch1.13.1.pt", 4, ['lm_head'],
-                    seqlen=1024, for_infer=True, dev=torch.device('cuda:0'), verbose=1)
+print_model(model_ori)
+print("*" * 80)
+# import pudb; pu.db
+model = load_quant(
+    model_ori,
+    "pyllama-7B4b.2.0.0+cu118.pt",
+    4,
+    ["lm_head"],
+    seqlen=1024,
+    for_infer=True,
+    dev=torch.device("cuda:0"),
+    verbose=1,
+)
 """
 from llama.llama_quant import load_quant
 model = load_quant(hf_model_name, "pyllama-7B4b.pt", 4, seqlen=1024, for_infer=True, dev=torch.device('cuda:0'))
 """
 
-training_args = transformers.TrainingArguments(
-    per_device_train_batch_size=MICRO_BATCH_SIZE,
-    gradient_accumulation_steps=2, # GRADIENT_ACCUMULATION_STEPS,
-    warmup_steps=100,
-    num_train_epochs=EPOCHS,
-    learning_rate=LEARNING_RATE,
-    fp16=True,
-    logging_steps=20,
-    output_dir="lora-alpaca",
-    save_total_limit=3,
-)
 
 model.is_loaded_in_8bit = True
 model._is_int8_training_enabled = True
 
-#print(model)
-#exit(0)
+# print(model)
+# exit(0)
 
 """model = LLaMAForCausalLM.from_pretrained(
     "decapoda-research/llama-7b-hf",
@@ -126,36 +133,38 @@ tokenizer = LLaMATokenizer.from_pretrained(hf_model_name, add_eos_token=True)
 
 model = prepare_model_for_int4_training(model)
 
-import pudb; pu.db
-print("o"*80)
+print_model(model, keep_non_params=True, expand_params=True)
+# import pudb; pu.db
+print("o" * 80)
 print(model.model.layers[0].self_attn.q_proj.scales)
 print(model.model.layers[0].self_attn.q_proj.zeros)
 print(model.model.layers[0].self_attn.q_proj.bias)
-print("o"*80)
+print("o" * 80)
 
+# ["q_proj", "v_proj", "k_proj", "gate_proj", "down_proj", "up_proj"],
 config = LoraConfig(
     r=LORA_R,
     lora_alpha=LORA_ALPHA,
-    target_modules=["q_proj", "v_proj"],
+    target_modules=["q_proj", "v_proj", "k_proj", "down_proj", "up_proj"],
     lora_dropout=LORA_DROPOUT,
     bias="none",
     task_type="CAUSAL_LM",
 )
 
-import pudb; pu.db
+# import pudb; pu.db
 model = get_peft_model(model, config)
-print("o"*80)
+print("o" * 80)
 print(model.base_model.model.model.layers[0].self_attn.q_proj.scales)
 print(model.base_model.model.model.layers[0].self_attn.q_proj.zeros)
 print(model.base_model.model.model.layers[0].self_attn.q_proj.bias)
-print("o"*80)
+print("o" * 80)
 
+print_model(model, keep_non_params=True, expand_params=True)
 
 tokenizer.pad_token_id = 0  # unk. we want this to be different from the eos token
 data = load_dataset("json", data_files="dataset/alpaca_data.json")
 
 model.print_trainable_parameters()
-
 
 
 def generate_prompt(data_point):
@@ -198,7 +207,20 @@ def tokenize(prompt):
 
 data = data.shuffle().map(lambda x: tokenize(generate_prompt(x)))
 
-device = torch.device('cuda:0')
+"""
+val_set_size=2000
+train_val = data["train"].train_test_split(
+    test_size=val_set_size, shuffle=True, seed=42
+)
+train_data = (
+    train_val["train"].shuffle().map(generate_and_tokenize_prompt)
+)
+val_data = (
+    train_val["test"].shuffle().map(generate_and_tokenize_prompt)
+)
+"""
+
+device = torch.device("cuda:0")
 
 for name, param in model.named_parameters():
     if param.requires_grad:
@@ -207,6 +229,22 @@ for name, param in model.named_parameters():
 for name, buffer in model.named_buffers():
     buffer.data = buffer.data.to(device)
 
+training_args = transformers.TrainingArguments(
+    per_device_train_batch_size=MICRO_BATCH_SIZE,
+    gradient_accumulation_steps=2,  # GRADIENT_ACCUMULATION_STEPS,
+    warmup_steps=100,
+    num_train_epochs=EPOCHS,
+    learning_rate=LEARNING_RATE,
+    fp16=True,
+    logging_steps=2,
+    optim="adamw_torch",
+    output_dir="lora-alpaca",
+    save_total_limit=3,
+    evaluation_strategy="no",
+    save_strategy="steps",
+    eval_steps=None,
+    save_steps=200,
+)
 
 trainer = transformers.Trainer(
     model=model,
