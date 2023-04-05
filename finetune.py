@@ -1,19 +1,15 @@
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
-import json
-import os
-import os.path as osp
-from typing import Union
+
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
-import torch.nn as nn
 import transformers
 from datasets import load_dataset
 from gptq import avoid_tensor_modified, load_quant
 from hiq.vis import print_model
-from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training
+from peft import LoraConfig, get_peft_model
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 from transformers import AutoConfig, AutoTokenizer
 
@@ -23,12 +19,14 @@ from llama.hf import LLaMAConfig, LLaMAForCausalLM, LLaMATokenizer
 MICRO_BATCH_SIZE = 16  # this could actually be 5 but i like powers of 2
 BATCH_SIZE = 128
 GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
-EPOCHS = 3  # we don't need 3 tbh
+EPOCHS = 1  # we don't need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
 CUTOFF_LEN = 256  # 256 accounts for about 96% of the data
 LORA_R = 64
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
+
+logging.getLogger("datasets.builder").setLevel(logging.ERROR)
 
 
 def prepare_model_for_int4_training(
@@ -99,27 +97,23 @@ transformers.modeling_utils._init_weights = False
 torch.set_default_dtype(torch.half)
 model_ori = LLaMAForCausalLM(config)
 torch.set_default_dtype(torch.float)
-print_model(model_ori)
+print_model(model_ori, show_buffer=True)
 print("*" * 80)
 # import pudb; pu.db
 model = load_quant(
     model_ori,
-    "pyllama-7B4b.2.0.0+cu118.pt",
-    4,
+    "pyllama-7B2b.2.0.0+cu118.pt",
+    2,
     ["lm_head"],
     seqlen=1024,
     for_infer=True,
     dev=torch.device("cuda:0"),
     verbose=1,
 )
-"""
-from llama.llama_quant import load_quant
-model = load_quant(hf_model_name, "pyllama-7B4b.pt", 4, seqlen=1024, for_infer=True, dev=torch.device('cuda:0'))
-"""
 
 
-model.is_loaded_in_8bit = True
-model._is_int8_training_enabled = True
+# model.is_loaded_in_8bit = True
+# model._is_int8_training_enabled = True
 
 # print(model)
 # exit(0)
@@ -133,7 +127,7 @@ tokenizer = LLaMATokenizer.from_pretrained(hf_model_name, add_eos_token=True)
 
 model = prepare_model_for_int4_training(model)
 
-print_model(model)
+print_model(model_ori, show_buffer=True)
 # import pudb; pu.db
 print("o" * 80)
 print(model.model.layers[0].self_attn.q_proj.scales)
@@ -145,21 +139,17 @@ print("o" * 80)
 config = LoraConfig(
     r=LORA_R,
     lora_alpha=LORA_ALPHA,
-    target_modules=["q_proj", "v_proj", "k_proj", "down_proj", "up_proj"],
+    target_modules=["k_proj", "down_proj", "up_proj"],
     lora_dropout=LORA_DROPOUT,
     bias="none",
     task_type="CAUSAL_LM",
+    wbits=2,
+    max_lora_layers=5,
 )
 
 # import pudb; pu.db
 model = get_peft_model(model, config)
-print("o" * 80)
-print(model.base_model.model.model.layers[0].self_attn.q_proj.scales)
-print(model.base_model.model.model.layers[0].self_attn.q_proj.zeros)
-print(model.base_model.model.model.layers[0].self_attn.q_proj.bias)
-print("o" * 80)
 
-print_model(model)
 
 tokenizer.pad_token_id = 0  # unk. we want this to be different from the eos token
 data = load_dataset("json", data_files="dataset/alpaca_data.json")
@@ -229,21 +219,24 @@ for name, param in model.named_parameters():
 for name, buffer in model.named_buffers():
     buffer.data = buffer.data.to(device)
 
+print_model(model_ori, show_buffer=True)
+
 training_args = transformers.TrainingArguments(
     per_device_train_batch_size=MICRO_BATCH_SIZE,
     gradient_accumulation_steps=2,  # GRADIENT_ACCUMULATION_STEPS,
-    warmup_steps=100,
+    warmup_steps=2,
     num_train_epochs=EPOCHS,
     learning_rate=LEARNING_RATE,
     fp16=True,
     logging_steps=2,
+    logging_dir='./logs',
     optim="adamw_torch",
     output_dir="lora-alpaca",
     save_total_limit=3,
     evaluation_strategy="no",
     save_strategy="steps",
     eval_steps=None,
-    save_steps=200,
+    save_steps=20,
 )
 
 trainer = transformers.Trainer(
@@ -254,5 +247,11 @@ trainer = transformers.Trainer(
 )
 model.config.use_cache = False
 trainer.train(resume_from_checkpoint=False)
+
+import os
+print(trainer.state.log_history)
+with open(os.path.join(training_args.logging_dir, "loss.txt"), "w", encoding='utf-8') as f:
+    for i, loss in enumerate(trainer.state.log_history["loss"]):
+        f.write(f"Iteration {i}: {loss}\n")
 
 model.save_pretrained("lora-alpaca")

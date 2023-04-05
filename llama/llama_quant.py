@@ -207,7 +207,7 @@ def run(args):
 
     if args.save:
         model = model.cpu()
-        print_model(model)
+        print_model(model, show_buffer=True)
         model_pack(model, quantizers, args.wbits, torch.device("cpu"))
         torch.save(model.state_dict(), args.save)
         model.save_pretrained(args.save + ".pretrained")
