@@ -133,7 +133,7 @@ tokenizer = LLaMATokenizer.from_pretrained(hf_model_name, add_eos_token=True)
 
 model = prepare_model_for_int4_training(model)
 
-print_model(model, keep_non_params=True, expand_params=True)
+print_model(model)
 # import pudb; pu.db
 print("o" * 80)
 print(model.model.layers[0].self_attn.q_proj.scales)
@@ -159,7 +159,7 @@ print(model.base_model.model.model.layers[0].self_attn.q_proj.zeros)
 print(model.base_model.model.model.layers[0].self_attn.q_proj.bias)
 print("o" * 80)
 
-print_model(model, keep_non_params=True, expand_params=True)
+print_model(model)
 
 tokenizer.pad_token_id = 0  # unk. we want this to be different from the eos token
 data = load_dataset("json", data_files="dataset/alpaca_data.json")
