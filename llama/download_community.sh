@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # UPDATE from Shawn (Mar 5 @ 2:43 AM)
 
 echo "❤️ Resume download is supported. You can ctrl-c and rerun the program to resume the downloading"
