@@ -12,7 +12,8 @@ function usage {
     cat <<EOF
 Usage: download_community [-vh] [<models>] [<output_directory>]
 
-Download the given llama <models> to <output_directory>. By default, will download 
+Download the given llama <models> to <output_directory>. By default, will
+download all available models into the current directory
 
 OPTIONS
 
