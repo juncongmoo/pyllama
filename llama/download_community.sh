@@ -78,6 +78,12 @@ function nshards {
 
 }
 
+# check for wget - if it's not present print an error
+if ! command -v wget &> /dev/null
+then
+    die "wget not found. You must have wget installed and on your path to run this script"
+fi
+
 # parse the optional flags and discard them
 while true; do
     case $1 in
@@ -102,7 +108,7 @@ IFS="," read -r -a MODELS <<< "$MODELS_TO_DOWNLOAD"
 # TARGET_FOLDER is the root directory to download the models to
 TARGET_FOLDER=${2:-.}
 
-echo "❤️ Resume download is supported. You can ctrl-c and rerun the program to resume the downloading"
+echo "❤️  Resume download is supported. You can ctrl-c and rerun the program to resume the downloading"
 
 # ensure the targeted directory exists
 mkdir -p "$TARGET_FOLDER"
