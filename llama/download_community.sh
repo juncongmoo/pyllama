@@ -127,15 +127,15 @@ do
     # download each shard in the model
     for s in $(seq -f "0%g" 0 "$(nshards "$model")")
     do
-        fout="$TARGET_FOLDER/$model/consolidated.$s.pth"
-        echo "downloading file to $fout ...please wait for a few minutes ..."
-        download "$PRESIGNED_URL/$model/consolidated.$s.pth" "$fout"
+       fout="$TARGET_FOLDER/$model/consolidated.$s.pth"
+       echo "downloading file to $fout ...please wait for a few minutes ..."
+       download "$PRESIGNED_URL/$model/consolidated.$s.pth" "$fout"
     done
 
     # download the params and checksums
     download "$PRESIGNED_URL/$model/params.json" "$TARGET_FOLDER/$model/params.json"
     download "$PRESIGNED_URL/$model/checklist.chk" "$TARGET_FOLDER/$model/checklist.chk"
 
-    printf "\n%sChecking checksums%s\n" "$YELLOW" "$CLEAR"
+    printf "\n%sChecking checksums for the $model model%s\n" "$YELLOW" "$CLEAR"
     verify "$TARGET_FOLDER/$model" checklist.chk
 done
