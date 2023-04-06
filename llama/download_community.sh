@@ -42,7 +42,7 @@ function die {
 # download a file with a progress bar, then display a success message. Takes
 # two arguments: the URL and the output file name
 function download {
-    if ! wget --progress=bar:force "$1" -O "$2"; then
+    if ! wget --continue --progress=bar:force "$1" -O "$2"; then
         die "failed to download $1 -> $2"
     fi
     echo ✅ "$2"
