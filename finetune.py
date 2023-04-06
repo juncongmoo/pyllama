@@ -1,7 +1,5 @@
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
@@ -10,9 +8,6 @@ from datasets import load_dataset
 from gptq import avoid_tensor_modified, load_quant
 from hiq.vis import print_model
 from peft import LoraConfig, get_peft_model
-from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
-from transformers import AutoConfig, AutoTokenizer
-
 from llama.hf import LLaMAConfig, LLaMAForCausalLM, LLaMATokenizer
 
 # optimized for RTX 4090. for larger GPUs, increase some of these?
@@ -27,6 +22,7 @@ LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
 
 logging.getLogger("datasets.builder").setLevel(logging.ERROR)
+logging.basicConfig(level=logging.ERROR)
 
 
 def prepare_model_for_int4_training(
@@ -229,7 +225,7 @@ training_args = transformers.TrainingArguments(
     learning_rate=LEARNING_RATE,
     fp16=True,
     logging_steps=2,
-    logging_dir='./logs',
+    logging_dir="./logs",
     optim="adamw_torch",
     output_dir="lora-alpaca",
     save_total_limit=3,
@@ -249,8 +245,11 @@ model.config.use_cache = False
 trainer.train(resume_from_checkpoint=False)
 
 import os
+
 print(trainer.state.log_history)
-with open(os.path.join(training_args.logging_dir, "loss.txt"), "w", encoding='utf-8') as f:
+with open(
+    os.path.join(training_args.logging_dir, "loss.txt"), "w", encoding="utf-8"
+) as f:
     for i, loss in enumerate(trainer.state.log_history["loss"]):
         f.write(f"Iteration {i}: {loss}\n")
 
