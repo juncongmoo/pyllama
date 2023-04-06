@@ -35,13 +35,13 @@ EOF
 
 # print its argument in red and quit 
 function die {
-    printf "%s%s%s\n" "$RED", "$1", "$CLEAR"
+    printf "%s%s%s\n" "$RED" "$1" "$CLEAR"
     exit 1
 }
 
 # print its argument in yellow
 function log {
-    printf "\n%s$1%s\n" "$YELLOW" "$CLEAR"
+    printf "\n%s%s%s\n" "$YELLOW" "$1" "$CLEAR"
 }
 
 # download a file with a progress bar, then display a success message. Takes
