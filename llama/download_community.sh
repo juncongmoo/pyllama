@@ -39,6 +39,11 @@ function die {
     exit 1
 }
 
+# print its argument in yellow
+function log {
+    printf "\n%s$1%s\n" "$YELLOW" "$CLEAR"
+}
+
 # download a file with a progress bar, then display a success message. Takes
 # two arguments: the URL and the output file name
 function download {
@@ -108,12 +113,12 @@ IFS="," read -r -a MODELS <<< "$MODELS_TO_DOWNLOAD"
 # TARGET_FOLDER is the root directory to download the models to
 TARGET_FOLDER=${2:-.}
 
-echo "❤️  Resume download is supported. You can ctrl-c and rerun the program to resume the downloading"
+log "❤️  Resume download is supported. You can ctrl-c and rerun the program to resume the downloading"
 
 # ensure the targeted directory exists
 mkdir -p "$TARGET_FOLDER"
 
-printf "\n%sDownloading tokenizer...%s\n" "$YELLOW" "$CLEAR"
+log "Downloading tokenizer..."
 download "$PRESIGNED_URL/tokenizer.model" "$TARGET_FOLDER/tokenizer.model"
 download "$PRESIGNED_URL/tokenizer_checklist.chk" "$TARGET_FOLDER/tokenizer_checklist.chk"
 verify "$TARGET_FOLDER" tokenizer_checklist.chk
@@ -121,14 +126,14 @@ verify "$TARGET_FOLDER" tokenizer_checklist.chk
 # for each model, download each of its shards and then verify the checksums
 for model in "${MODELS[@]}"
 do
-    echo "Downloading $model"
+    log "Downloading $model"
     mkdir -p "$TARGET_FOLDER/$model"
 
     # download each shard in the model
     for s in $(seq -f "0%g" 0 "$(nshards "$model")")
     do
        fout="$TARGET_FOLDER/$model/consolidated.$s.pth"
-       echo "downloading file to $fout ...please wait for a few minutes ..."
+       log "downloading file to $fout ...please wait for a few minutes ..."
        download "$PRESIGNED_URL/$model/consolidated.$s.pth" "$fout"
     done
 
@@ -136,6 +141,6 @@ do
     download "$PRESIGNED_URL/$model/params.json" "$TARGET_FOLDER/$model/params.json"
     download "$PRESIGNED_URL/$model/checklist.chk" "$TARGET_FOLDER/$model/checklist.chk"
 
-    printf "\n%sChecking checksums for the $model model%s\n" "$YELLOW" "$CLEAR"
+    log "Checking checksums for the $model model"
     verify "$TARGET_FOLDER/$model" checklist.chk
 done
