@@ -4,30 +4,24 @@ import time
 import torch
 import transformers
 from gptq import get_loaders
-from gptq.quant_utils import (
-    benchmark,
-    decoder_multigpu,
-    eval_model,
-    get_quantizer,
-    load_quant,
-    model_pack,
-)
-from gptq.utils import (
-    DATASET_LIST,
-    avoid_tensor_modified,
-    get_args,
-    get_model,
-    print_model,
-)
+from gptq.quant_utils import (benchmark, decoder_multigpu, eval_model,
+                              get_quantizer, load_quant, model_pack)
+from gptq.utils import (DATASET_LIST, avoid_tensor_modified, get_args,
+                        get_model, print_model)
 from tqdm import tqdm
 from transformers import AutoTokenizer
+
 from llama.hf import LLaMAConfig, LLaMAForCausalLM, LLaMATokenizer
+from llama.lora_model import load_lora_model
 
 logging.getLogger("datasets.builder").setLevel(logging.ERROR)
 
 
 def run(args):
-    if args.load == "hf":
+    if args.load == "lora":
+        model = load_lora_model()
+        model.eval()
+    elif args.load == "hf":
         model = get_model(LLaMAForCausalLM, args.model)
         model.seqlen = model.config.max_sequence_length
         model.eval()

@@ -244,13 +244,4 @@ trainer = transformers.Trainer(
 model.config.use_cache = False
 trainer.train(resume_from_checkpoint=False)
 
-import os
-
-print(trainer.state.log_history)
-with open(
-    os.path.join(training_args.logging_dir, "loss.txt"), "w", encoding="utf-8"
-) as f:
-    for i, loss in enumerate(trainer.state.log_history["loss"]):
-        f.write(f"Iteration {i}: {loss}\n")
-
 model.save_pretrained("lora-alpaca")
