@@ -9,7 +9,7 @@ RED=$(tput setaf 1)
 CLEAR=$(tput sgr0)
 
 function usage {
-    cat <<"EOF"
+    cat <<EOF
 Usage: download_community [-vh] [<models>] [<output_directory>]
 
 Download the given llama <models> to <output_directory>. By default, will download 
