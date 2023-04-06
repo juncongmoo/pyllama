@@ -4,8 +4,8 @@ set -euo pipefail
 PRESIGNED_URL="https://agi.gpt4.org/llama/LLaMA"
 ALL_MODELS=7B,13B,30B,65B
 
-YELLOW=$(tput setaf 1)
-RED=$(tput setaf 3)
+YELLOW=$(tput setaf 3)
+RED=$(tput setaf 1)
 CLEAR=$(tput sgr0)
 
 function usage {
@@ -35,7 +35,7 @@ EOF
 
 # print its argument in red and quit 
 function die {
-    printf "%s%s%s\n", "$RED", "$1", "$CLEAR"
+    printf "%s%s%s\n" "$RED", "$1", "$CLEAR"
     exit 1
 }
 
@@ -113,7 +113,7 @@ echo "❤️  Resume download is supported. You can ctrl-c and rerun the program
 # ensure the targeted directory exists
 mkdir -p "$TARGET_FOLDER"
 
-printf "%sDownloading tokenizer...%s\n" "$YELLOW" "$CLEAR"
+printf "\n%sDownloading tokenizer...%s\n" "$YELLOW" "$CLEAR"
 download "$PRESIGNED_URL/tokenizer.model" "$TARGET_FOLDER/tokenizer.model"
 download "$PRESIGNED_URL/tokenizer_checklist.chk" "$TARGET_FOLDER/tokenizer_checklist.chk"
 verify "$TARGET_FOLDER" tokenizer_checklist.chk
@@ -131,9 +131,11 @@ do
         echo "downloading file to $fout ...please wait for a few minutes ..."
         download "$PRESIGNED_URL/$model/consolidated.$s.pth" "$fout"
     done
-    download "$PRESIGNED_URL/params.json" "$TARGET_FOLDER/$model/params.json"
-    download "$PRESIGNED_URL/checklist.chk" "$TARGET_FOLDER/$model/checklist.chk"
 
-    printf "%sChecking checksums%s" "$YELLOW" "$CLEAR"
+    # download the params and checksums
+    download "$PRESIGNED_URL/$model/params.json" "$TARGET_FOLDER/$model/params.json"
+    download "$PRESIGNED_URL/$model/checklist.chk" "$TARGET_FOLDER/$model/checklist.chk"
+
+    printf "\n%sChecking checksums%s\n" "$YELLOW" "$CLEAR"
     verify "$TARGET_FOLDER/$model" checklist.chk
 done
