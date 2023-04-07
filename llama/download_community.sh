@@ -107,7 +107,7 @@ while true; do
 done
 
 # MODELS_TO_DOWNLOAD is a comma-separated list of models the user wants to
-# download, which defaults to all models. Split it into an array calld MODELS
+# download, which defaults to all models. Split it into an array called MODELS
 MODELS_TO_DOWNLOAD=${1:-$ALL_MODELS}
 IFS="," read -r -a MODELS <<< "$MODELS_TO_DOWNLOAD"
 
