@@ -143,12 +143,12 @@ def run(args):
         if len(gpus) > 1:
             first = ["embed_tokens", "embed_positions", "project_in"]
             last = ["project_out", "final_layer_norm"]
-            decoder_multigpu(model, model.model.decoder, gpus, first, last)
+            decoder_multigpu(model, model.model, gpus, first, last)
         else:
             model = model.to(dev)
         if args.benchmark:
             input_ids = next(iter(data_loader))[0][:, : args.benchmark]
-            benchmark(model, model.model, input_ids, check_perplexity=args.check)
+            benchmark(model, model.model, input_ids, check_perplexity=args.perplexity)
         return
 
     if args.text:
