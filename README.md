@@ -166,10 +166,12 @@ The following is an example of LLaMA running in a 8GB single GPU.
 With quantization, you can run LLaMA with a 4GB memory GPU.
 
 - pyllama can run 7B model with 6GB GPU memory.
+Example: ```python quant_infer.py --wbits 4 --load pyllama-7B4b.pt -- text "..." --max_length 24 --cuda cuda:0```
 
 ![4bit-quant-6GB](https://github.com/juncongmoo/pyllama/blob/main/docs/pyllama_7B_6GB.png)
 
 - pyllama can run 7B model with 3.2GB GPU memory.
+Example: ```python quant_infer.py --wbits 2 --load pyllama-7B4b.pt -- text "..." --max_length 32```
 
 ![2bit-quant-6GB](https://github.com/juncongmoo/pyllama/blob/main/docs/pyllama_7B_3GB.png)
 
