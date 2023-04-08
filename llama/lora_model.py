@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import transformers
 from gptq import avoid_tensor_modified, load_quant
+from gptq.quant import QuantLinear
 from peft import LoraConfig, get_peft_model
 from llama.hf import LLaMAConfig, LLaMAForCausalLM
 
@@ -54,7 +55,14 @@ def prepare(
         )
     return model
 
-def load_lora_model(f="lora-alpaca/checkpoint-1620/pytorch_model.bin",wbits=2,max_lora_layers=5,dev=torch.device("cuda:0")):
+
+def load_lora_model(
+    f="lora-alpaca/checkpoint-1620/pytorch_model.bin",
+    bits=2,
+    max_lora_layers=5,
+    dev=torch.device("cuda:0"),
+    new_class=QuantLinear,
+):
     hf_model_name = "decapoda-research/llama-7b-hf"
     config = LLaMAConfig.from_pretrained(hf_model_name)
     avoid_tensor_modified()
@@ -65,12 +73,13 @@ def load_lora_model(f="lora-alpaca/checkpoint-1620/pytorch_model.bin",wbits=2,ma
     model = load_quant(
         model_ori,
         None,
-        wbits,
+        bits,
         ["lm_head"],
         seqlen=1024,
         for_infer=True,
         dev=dev,
         verbose=1,
+        new_class=new_class,
     )
     model = prepare(model)
     config = LoraConfig(
@@ -79,8 +88,7 @@ def load_lora_model(f="lora-alpaca/checkpoint-1620/pytorch_model.bin",wbits=2,ma
         target_modules=["k_proj", "down_proj", "up_proj"],
         lora_dropout=LORA_DROPOUT,
         bias="none",
-        task_type="CAUSAL_LM",
-        wbits=wbits,
+        bits=bits,
         max_lora_layers=max_lora_layers,
     )
     model = get_peft_model(model, config)
@@ -89,14 +97,26 @@ def load_lora_model(f="lora-alpaca/checkpoint-1620/pytorch_model.bin",wbits=2,ma
     for layer in m.model.layers:
         if not hasattr(layer.self_attn.k_proj, "lora_A"):
             break
-        layer.self_attn.k_proj.lora_A.weight = nn.Parameter(layer.self_attn.k_proj.lora_A.weight.half())
-        layer.self_attn.k_proj.lora_B.weight = nn.Parameter(layer.self_attn.k_proj.lora_B.weight.half())
+        layer.self_attn.k_proj.lora_A.weight = nn.Parameter(
+            layer.self_attn.k_proj.lora_A.weight.half()
+        )
+        layer.self_attn.k_proj.lora_B.weight = nn.Parameter(
+            layer.self_attn.k_proj.lora_B.weight.half()
+        )
 
-        layer.mlp.down_proj.lora_A.weight = nn.Parameter(layer.mlp.down_proj.lora_A.weight.half())
-        layer.mlp.down_proj.lora_B.weight = nn.Parameter(layer.mlp.down_proj.lora_B.weight.half())
+        layer.mlp.down_proj.lora_A.weight = nn.Parameter(
+            layer.mlp.down_proj.lora_A.weight.half()
+        )
+        layer.mlp.down_proj.lora_B.weight = nn.Parameter(
+            layer.mlp.down_proj.lora_B.weight.half()
+        )
 
         if not hasattr(layer.mlp.up_proj, "lora_A"):
             break
-        layer.mlp.up_proj.lora_A.weight = nn.Parameter(layer.mlp.up_proj.lora_A.weight.half())
-        layer.mlp.up_proj.lora_B.weight = nn.Parameter(layer.mlp.up_proj.lora_B.weight.half())
+        layer.mlp.up_proj.lora_A.weight = nn.Parameter(
+            layer.mlp.up_proj.lora_A.weight.half()
+        )
+        layer.mlp.up_proj.lora_B.weight = nn.Parameter(
+            layer.mlp.up_proj.lora_B.weight.half()
+        )
     return m

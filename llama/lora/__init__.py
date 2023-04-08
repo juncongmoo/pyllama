@@ -43,10 +43,10 @@ def mark_only_lora_as_trainable(model: nn.Module, bias: str = "none") -> None:
 def get_sd(model, state_dict=None):
     if state_dict is None:
         state_dict = model.state_dict()
-    # to_return = lora_state_dict(model, bias=model.peft_config.bias)
+    # to_return = lora_state_dict(model, bias=model.pconfig.bias)
     # adapted from `https://github.com/microsoft/LoRA/blob/main/loralib/utils.py`
     # to directly with the state dict which is necessary when using DeepSpeed or FSDP
-    bias = model.peft_config.bias
+    bias = model.pconfig.bias
     if bias == "none":
         to_return = {k: state_dict[k] for k in state_dict if "lora_" in k}
     elif bias == "all":
@@ -111,7 +111,7 @@ class LoraConfig(object):
         },
     )
     lora_alpha: int = field(default=None, metadata={"help": "Lora alpha"})
-    wbits: int = field(default=4, metadata={"help": "quantization bits number/width"})
+    bits: int = field(default=4, metadata={"help": "quantization bits number/width"})
     max_lora_layers: int = field(
         default=10, metadata={"help": "max number of lora layers"}
     )
@@ -144,47 +144,47 @@ class LoraConfig(object):
 
 
 class LoraModel(torch.nn.Module):
-    def __init__(self, config, model, wbits=None):
+    def __init__(self, config, model, bits=None):
         super().__init__()
-        self.peft_config = config
+        self.pconfig = config
         self.model = model
-        self.wbits = wbits or config.wbits
+        self.bits = bits or config.bits
         self._find_and_replace()
-        mark_only_lora_as_trainable(self.model, self.peft_config.bias)
+        mark_only_lora_as_trainable(self.model, self.pconfig.bias)
         self.forward = self.model.forward
 
     def _find_and_replace(self):
         is_target_modules_in_base_model = False
         is_hf_device_map_available = hasattr(self.model, "hf_device_map")
         kwargs = {
-            "r": self.peft_config.r,
-            "lora_alpha": self.peft_config.lora_alpha,
-            "lora_dropout": self.peft_config.lora_dropout,
-            "fan_in_fan_out": self.peft_config.fan_in_fan_out,
+            "r": self.pconfig.r,
+            "lora_alpha": self.pconfig.lora_alpha,
+            "lora_dropout": self.pconfig.lora_dropout,
+            "fan_in_fan_out": self.pconfig.fan_in_fan_out,
             "merge_weights": (
-                self.peft_config.merge_weights or self.peft_config.inference_mode
+                self.pconfig.merge_weights or self.pconfig.inference_mode
             )
             and not is_hf_device_map_available,
         }
         count = 0
         for key, _ in self.model.named_modules():
-            if isinstance(self.peft_config.target_modules, str):
-                target_module_found = re.fullmatch(self.peft_config.target_modules, key)
+            if isinstance(self.pconfig.target_modules, str):
+                target_module_found = re.fullmatch(self.pconfig.target_modules, key)
             else:
                 target_module_found = any(
                     key.endswith(target_key)
-                    for target_key in self.peft_config.target_modules
+                    for target_key in self.pconfig.target_modules
                 )
 
-            if target_module_found and count < self.peft_config.max_lora_layers:
+            if target_module_found and count < self.pconfig.max_lora_layers:
                 if not is_target_modules_in_base_model:
                     is_target_modules_in_base_model = True
                 parent, target, target_name = self.__get_submodules(key)
                 kwargs.update({"enable_lora": [True], "device": target.qweight.device})
                 new_module = MergedQuantLinear(
-                    (target.qweight.shape[0] * 32) // self.wbits,
+                    (target.qweight.shape[0] * 32) // self.bits,
                     target.bias.shape[0],
-                    self.wbits,
+                    self.bits,
                     **kwargs,
                 )
                 new_module.scales = target.scales
@@ -194,7 +194,7 @@ class LoraModel(torch.nn.Module):
                 count += 1
         if not is_target_modules_in_base_model:
             raise ValueError(
-                f"Target modules {self.peft_config.target_modules} not found in the base model. "
+                f"Target modules {self.pconfig.target_modules} not found in the base model. "
                 f"Please check the target modules and try again."
             )
 
@@ -247,14 +247,13 @@ class MergedQuantLinear(QuantLinear, LoraLayer):
         self,
         in_features: int,
         out_features: int,
-        wbits=4,
+        bits=4,
         r: int = 0,
         lora_alpha: int = 1,
         lora_dropout: float = 0.0,
-        enable_lora: List[bool] = [True],
         **kwargs,
     ):
-        QuantLinear.__init__(self, wbits, in_features, out_features)
+        QuantLinear.__init__(self, bits, in_features, out_features)
         self.in_features = in_features
         self.out_features = out_features
         LoraLayer.__init__(
@@ -266,10 +265,9 @@ class MergedQuantLinear(QuantLinear, LoraLayer):
         )
         # if out_features % len(enable_lora) != 0:
         #    raise ValueError("The length of enable_lora must divide out_features")
-        self.enable_lora = enable_lora
         dev = kwargs["device"] if "device" in kwargs else torch.device("cpu")
         # Actual trainable parameters
-        if r > 0 and any(enable_lora):
+        if r > 0:
             self.lora_A = nn.Linear(in_features, r, bias=False, dtype=torch.float32)
             self.lora_B = nn.Linear(r, out_features, bias=False, dtype=torch.float32)
             self.scaling = self.lora_alpha / self.r
@@ -298,14 +296,14 @@ class MergedQuantLinear(QuantLinear, LoraLayer):
         return result
 
 
-class HFModel(PushToHubMixin, torch.nn.Module):
-    def __init__(self, model, peft_config: LoraConfig):
+class HiQModel(PushToHubMixin, torch.nn.Module):
+    def __init__(self, model, pconfig: LoraConfig):
         super().__init__()
-        self.peft_config = peft_config
+        self.pconfig = pconfig
         self.base_model = model
         self.config = self.base_model.config
         self.modules_to_save = None
-        self.base_model = LoraModel(peft_config, model)
+        self.base_model = LoraModel(pconfig, model)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def save_pretrained(self, save_directory, **kwargs):
@@ -320,14 +318,14 @@ class HFModel(PushToHubMixin, torch.nn.Module):
         torch.save(output_state_dict, os.path.join(save_directory, WEIGHTS_NAME))
 
         # save the config and change the inference mode to `True`
-        if self.peft_config.base_model_name_or_path is None:
-            self.peft_config.base_model_name_or_path = (
+        if self.pconfig.base_model_name_or_path is None:
+            self.pconfig.base_model_name_or_path = (
                 self.base_model.model.__dict__.get("name_or_path", None)
             )
-        inference_mode = self.peft_config.inference_mode
-        self.peft_config.inference_mode = True
-        self.peft_config.save_pretrained(save_directory)
-        self.peft_config.inference_mode = inference_mode
+        inference_mode = self.pconfig.inference_mode
+        self.pconfig.inference_mode = True
+        self.pconfig.save_pretrained(save_directory)
+        self.pconfig.inference_mode = inference_mode
 
     @classmethod
     def from_pretrained(cls, model, model_id, **kwargs):
@@ -357,42 +355,12 @@ class HFModel(PushToHubMixin, torch.nn.Module):
         )
         # load the weights into the model
         model = set_sd(model, adapters_weights)
-        if getattr(model, "hf_device_map", None) is not None:
-            device_map = kwargs.get("device_map", "auto")
-            max_memory = kwargs.get("max_memory", None)
-            no_split_module_classes = model._no_split_modules
-            if device_map != "sequential":
-                max_memory = get_balanced_memory(
-                    model,
-                    max_memory=max_memory,
-                    no_split_module_classes=no_split_module_classes,
-                    low_zero=(device_map == "balanced_low_0"),
-                )
-            if isinstance(device_map, str):
-                device_map = infer_auto_device_map(
-                    model,
-                    max_memory=max_memory,
-                    no_split_module_classes=no_split_module_classes,
-                )
-            model = dispatch_model(model, device_map=device_map)
-            hook = AlignDevicesHook(io_same_device=True)
-            add_hook_to_module(model.base_model.model, hook)
         return model
 
     def print_trainable_parameters(self):
-        trainable_params = 0
-        all_param = 0
-        for _, param in self.named_parameters():
-            num_params = param.numel()
-            # if using DS Zero 3 and the weights are initialized empty
-            if num_params == 0 and hasattr(param, "ds_numel"):
-                num_params = param.ds_numel
-
-            all_param += num_params
-            if param.requires_grad:
-                trainable_params += num_params
+        trainable_params, all_param, pct = model_parameters_stats(self)
         print(
-            f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {100 * trainable_params / all_param}"
+            f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {pct}"
         )
 
     def __getattr__(self, name: str):
@@ -409,9 +377,9 @@ class HFModel(PushToHubMixin, torch.nn.Module):
         return self.base_model.model
 
 
-class LQModel(HFModel):
-    def __init__(self, model, peft_config: LoraConfig):
-        super().__init__(model, peft_config)
+class LQModel(HiQModel):
+    def __init__(self, model, pconfig: LoraConfig):
+        super().__init__(model, pconfig)
         self.base_model_prepare_inputs_for_generation = (
             self.base_model.prepare_inputs_for_generation
         )
@@ -458,3 +426,16 @@ class LQModel(HFModel):
 
     def prepare_inputs_for_generation(self, *args, **kwargs):
         return self.base_model_prepare_inputs_for_generation(*args, **kwargs)
+
+
+def model_parameters_stats(model):
+    trainable_params = 0
+    all_param = 0
+    for _, param in model.named_parameters():
+        num_params = param.numel()
+        if num_params == 0 and hasattr(param, "ds_numel"):
+            num_params = param.ds_numel
+        all_param += num_params
+        if param.requires_grad:
+            trainable_params += num_params
+    return trainable_params, all_param, 100 * trainable_params / all_param

@@ -139,7 +139,7 @@ config = LoraConfig(
     lora_dropout=LORA_DROPOUT,
     bias="none",
     task_type="CAUSAL_LM",
-    wbits=2,
+    bits=2,
     max_lora_layers=5,
 )
 

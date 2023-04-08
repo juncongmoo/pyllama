@@ -16,10 +16,11 @@ from llama.lora_model import load_lora_model
 
 logging.getLogger("datasets.builder").setLevel(logging.ERROR)
 
+from gptq import QuantLinear
 
 def run(args):
     if args.load == "lora":
-        model = load_lora_model()
+        model = load_lora_model(f=args.model_path, bits=args.bits, max_lora_layers=5, new_class=QuantLinear)
         model.eval()
     elif args.load == "hf":
         model = get_model(LLaMAForCausalLM, args.model)
@@ -33,7 +34,7 @@ def run(args):
             torch.set_default_dtype(torch.half)
             model = LLaMAForCausalLM(config)
             torch.set_default_dtype(torch.float)
-            saved_state_dict = torch.load(args.local_model)
+            saved_state_dict = torch.load(args.model_path)
             model.load_state_dict(saved_state_dict)
         elif args.load == "q":
             config = LLaMAConfig.from_pretrained(args.model)
@@ -43,10 +44,11 @@ def run(args):
             skip_layers = ["lm_head"]
             model = load_quant(
                 model,
-                args.local_model,
-                args.wbits,
+                args.model_path,
+                args.bits,
                 skip_layers,
                 model.config.max_sequence_length,
+                new_class=QuantLinear,
             )
         else:
             raise ValueError(f"Wrong Argument load: {args.load}!")
@@ -141,14 +143,13 @@ def run(args):
     if args.benchmark:
         gpus = [torch.device(f"cuda:{i}") for i in range(torch.cuda.device_count())]
         if len(gpus) > 1:
-            first = ["embed_tokens", "embed_positions", "project_in"]
-            last = ["project_out", "final_layer_norm"]
-            decoder_multigpu(model, model.model, gpus, first, last)
+            tail = ("embed_tokens",)
+            head = ("norm",)
+            decoder_multigpu(model, model.model, gpus, tail, head)
         else:
             model = model.to(dev)
-        if args.benchmark:
-            input_ids = next(iter(data_loader))[0][:, : args.benchmark]
-            benchmark(model, model.model, input_ids, check_perplexity=args.perplexity)
+        input_ids = next(iter(data_loader))[0][:, : args.benchmark]
+        benchmark(model, model.model, input_ids, check_perplexity=args.perplexity)
         return
 
     if args.text:
@@ -184,7 +185,7 @@ def run(args):
             print(n, torch.mean((p == 0).float()))
             if "fc2" in n:
                 break
-    elif args.wbits < 16 and not args.nearest and args.mode == "q":
+    elif args.bits < 16 and not args.nearest and args.mode == "q":
         quantizers = get_quantizer(
             model,
             model.model,
@@ -202,7 +203,7 @@ def run(args):
     if args.save:
         model = model.cpu()
         print_model(model, show_buffer=True)
-        model_pack(model, quantizers, args.wbits, torch.device("cpu"))
+        model_pack(model, quantizers, args.bits, torch.device("cpu"))
         torch.save(model.state_dict(), args.save)
         model.save_pretrained(args.save + ".pretrained")
 

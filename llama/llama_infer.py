@@ -12,7 +12,7 @@ def get_args():
 
     parser.add_argument("--model", type=str, default="decapoda-research/llama-7b-hf", help="llama model to load")
     parser.add_argument(
-        "--wbits",
+        "--bits",
         type=int,
         default=16,
         choices=[2, 3, 4, 8, 16],
@@ -71,8 +71,8 @@ def run(args=None):
         print(model_ori)
         print("*"*80)
         #import pudb; pu.db
-        model = load_quant(model_ori, args.load, args.wbits, ['lm_head'],seqlen=1024, for_infer=True, dev=torch.device('cuda:0'), verbose=1)
-        #model = load_quant(args.model, args.load, args.wbits, args.seqlen)
+        model = load_quant(model_ori, args.load, args.bits, ['lm_head'],seqlen=1024, for_infer=True, dev=torch.device('cuda:0'), verbose=1)
+        #model = load_quant(args.model, args.load, args.bits, args.seqlen)
     else:
         model = get_llama(args.model)
         model.eval()

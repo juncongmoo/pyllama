@@ -80,7 +80,7 @@ optional arguments:
 python -m llama.llama_quant --help
 usage: llama_quant.py [-h] [--ckpt_dir CKPT_DIR] [--tokenizer_path TOKENIZER_PATH] 
                       [--seed SEED] [--nsamples NSAMPLES] [--percdamp PERCDAMP]
-                      [--nearest] [--wbits {2,3,4,8,16}] [--groupsize GROUPSIZE]
+                      [--nearest] [--bits {2,3,4,8,16}] [--groupsize GROUPSIZE]
                       [--save SAVE] [--load LOAD] [--benchmark BENCHMARK] [--check]
                       [--cuda CUDA] [--eval]
                       {wikitext2,ptb,c4}
@@ -96,7 +96,7 @@ optional arguments:
   --nsamples NSAMPLES   Number of calibration data samples.
   --percdamp PERCDAMP   Percent of the average Hessian diagonal to use for dampening.
   --nearest             Whether to run the RTN baseline.
-  --wbits {2,3,4,8}  bits for quauntization
+  --bits {2,3,4,8}  bits for quauntization
   --groupsize GROUPSIZE
                         Groupsize to use for quantization; default uses full row.
   --save SAVE           Save quantized checkpoint under this name, eg pyllama-7B4b.pt.
@@ -111,19 +111,19 @@ optional arguments:
 - Quantize 7B model to 8-bit
 
 ```bash
-python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --wbits 8 --save pyllama-7B8b.pt
+python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --bits 8 --save pyllama-7B8b.pt
 ```
 
 - Quantize 7B model to 4-bit with groupsize 128 (the recommended setup 🔥)
 
 ```bash
-python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --wbits 4 --groupsize 128 --save pyllama-7B4b.pt
+python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --bits 4 --groupsize 128 --save pyllama-7B4b.pt
 ```
 
 - Quantize 7B model to 2-bit
 
 ```bash
-python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --wbits 2 --save pyllama-7B2b.pt
+python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --bits 2 --save pyllama-7B2b.pt
 ```
 
 The download links for quantized LLaMA files are below:

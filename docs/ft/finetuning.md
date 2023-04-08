@@ -3,7 +3,7 @@
 After Lora Finetuning:
 
 ```
-python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --load lora --wbits 2 --benchmark 1024 --max_length 64 --check
+python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --load lora --bits 2 --benchmark 1024 --max_length 64 --check
 🌳 LLaMAForCausalLM
 ├── model(LLaMAModel)
 │   ├── embed_tokens(Embedding) weight[32000,4096](fp16)(cuda:0)❄️
