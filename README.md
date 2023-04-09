@@ -7,7 +7,7 @@
 
 ## 📥 Installation
 
-In a conda env with pytorch / cuda available, run
+In a conda env with pytorch / cuda available, run:
 ```
 pip install pyllama -U
 ```
@@ -96,7 +96,7 @@ optional arguments:
   --nsamples NSAMPLES   Number of calibration data samples.
   --percdamp PERCDAMP   Percent of the average Hessian diagonal to use for dampening.
   --nearest             Whether to run the RTN baseline.
-  --wbits {2,3,4,8}  bits for quauntization
+  --wbits {2,3,4,8}  bits for quantization
   --groupsize GROUPSIZE
                         Groupsize to use for quantization; default uses full row.
   --save SAVE           Save quantized checkpoint under this name, eg pyllama-7B4b.pt.
@@ -140,7 +140,7 @@ The download links for quantized LLaMA files are below:
 
 It took me 2 hours 40 mins to quantize the 65B model to 4bit. The file size is reduced from 122GB to 32GB.
 
-> The following suggestions are recommended for LLM qunatization:
+> The following suggestions are recommended for LLM quantization:
 > 1. By default, use 4-bit quantization for LLM inference as it offers the total model bits and zero-shot accuracy trade-offs.
 > 2. Use a block size of 128 or lower to stabilize 4-bit quantization and improve zero-shot performance.
 > 3. Use a floating point or quantile quantization data type. In some cases, integer data types might be preferable to improve inference latency depending on the implementation and hardware support.
@@ -149,7 +149,7 @@ It took me 2 hours 40 mins to quantize the 65B model to 4bit. The file size is r
 
 ### 🥥 Without Quantization
 
-Set the environment variables `CKPT_DIR` as your llamm model folder, for example `/llama_data/7B`, and `TOKENIZER_PATH` as your tokenizer's path, such as `/llama_data/tokenizer.model`.
+Set the environment variables `CKPT_DIR` as your llama model folder, for example `/llama_data/7B`, and `TOKENIZER_PATH` as your tokenizer's path, such as `/llama_data/tokenizer.model`.
 
 And then run the following command:
 
@@ -279,7 +279,7 @@ optional arguments:
 
 ## 🔬 Model Fine Tuning
 
-### With [Standford Alpaca](https://github.com/tatsu-lab/stanford_alpaca) Instruction-Following Dataset
+### With [Stanford Alpaca](https://github.com/tatsu-lab/stanford_alpaca) Instruction-Following Dataset
 
 - Tokenization
 - Finetuning
