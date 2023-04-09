@@ -6,7 +6,20 @@ python -m llama.llama_quant decapoda-research/llama-30b-hf c4 --load hf --mode q
 
 ## Benchmarking
 
+### 7B
+
 ```
+python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --load q --model_path pyllama-7B2b.2.0.0+cu118.pt --bits 2 --benchmark 1024 --max_length 64 --check
+Number of parameters: 262410240
+Median: 0.035959482192993164
+PPL: 1580.4105224609375
+Max memory(MiB): 2580.2841796875
+
+python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --load q --model_path pyllama-7B3b.2.0.0+cu118.pt --bits 3 --benchmark 1024 --max_length 64 --check
+Median: 0.036728501319885254
+PPL: 10.22502326965332
+Max memory(MiB): 3352.2841796875
+
 ubuntu@research:~/pyllama$ python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --load q --model_path pyllama-7B4b.2.0.0+cu118.pt --bits 4 --benchmark 1024 --max_length 64 --check
 🌳 LLaMAForCausalLM
 ├── model(LLaMAModel)
@@ -20,8 +33,6 @@ ubuntu@research:~/pyllama$ python -m llama.llama_quant decapoda-research/llama-7
 └── lm_head(Linear) weight[32000,4096](fp16)
 Number of parameters: 262410240
 normalizer.cc(51) LOG(INFO) precompiled_charsmap is empty. use identity normalization.
-Benchmarking ...
-100%|████████████████████████████████████████████████████| 1024/1024 [00:38<00:00, 26.87it/s]
 Median: 0.03691422939300537
 PPL: 5.136333465576172
 Max memory(MiB): 4172.2841796875
@@ -31,17 +42,33 @@ PPL: 5.137877464294434
 Max memory(MiB): 4172.2841796875
 ```
 
-```
-python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --load q --model_path pyllama-7B2b.2.0.0+cu118.pt --bits 2 --benchmark 1024 --max_length 64 --check
-Number of parameters: 262410240
-Median: 0.035959482192993164
-PPL: 1580.4105224609375
-Max memory(MiB): 2580.2841796875
+### 13B
 
-python -m llama.llama_quant decapoda-research/llama-7b-hf c4 --load q --model_path pyllama-7B3b.2.0.0+cu118.pt --bits 3 --benchmark 1024 --max_length 64 --check
-Median: 0.036728501319885254
-PPL: 10.22502326965332
-Max memory(MiB): 3352.2841796875
+```
+python -m llama.llama_quant decapoda-research/llama-13b-hf c4 --load q --model_path pyllama-13B2b.2.0.0+cu118.pt --bits 2 --benchmark 1024 --max_length 64 --perplexity
+🌳 LLaMAForCausalLM<trainable_params:328094720,all_params:13015864320,percentage:2.52073%>
+├── LLaMAModel(model)
+│   ├── Embedding(embed_tokens)|weight[32000,5120]<f16>
+│   ├── ModuleList(layers)
+│   │   └── 💠 LLaMADecoderLayer(0-39)<🦜:10240,317204480x40>
+│   │       ┣━━ LLaMAAttention(self_attn)
+│   │       ┃   ┣━━ 💠 QuantLinear(q_proj,k_proj,v_proj,o_proj)<🦜:0,26214400x4>|qweight[320,5120]<i32>❄️|shift[5120,1]❄️|scales[5120,1]❄️|bias[5120]❄️
+│   │       ┃   ┗━━ RotaryEmbedding(rotary_emb)|inv_freq[64]❄️
+│   │       ┣━━ LLaMAMLP(mlp)
+│   │       ┃   ┣━━ 💠 QuantLinear(gate_proj,up_proj)<🦜:0,70778880x2>|qweight[320,13824]<i32>❄️|shift[13824,1]❄️|scales[13824,1]❄️|bias[13824]❄️
+│   │       ┃   ┗━━ QuantLinear(down_proj)|qweight[864,5120]<i32>❄️|shift[5120,1]❄️|scales[5120,1]❄️|bias[5120]❄️
+│   │       ┗━━ 💠 RMSNorm(input_layernorm,post_attention_layernorm)<🦜:5120x2>|weight[5120]<f16>
+│   └── RMSNorm(norm)|weight[5120]<f16>
+└── Linear(lm_head)|weight[32000,5120]<f16>
+Number of parameters: 13015864320
+Median: 0.04523146152496338
+PPL: 215.22183227539062
+Max memory(MiB): 4483.3935546875
+```
+
+### 65B
+
+```
 
 🅰️  python -m llama.llama_quant decapoda-research/llama-65b-hf c4 --load q --model_path pyllama-65B2b.2.0.0+cu118.pt --bits 2 --benchmark 1024 --max_length 64 --perplexity
 🌳 LLaMAForCausalLM<trainable_params:65285660672,all_params:525606912,percentage:0.80509%>
@@ -61,10 +88,7 @@ Max memory(MiB): 3352.2841796875
 Median: 0.0913853645324707
 PPL: 14.639993667602539
 Max memory(MiB): 19328.5654296875
-```
 
-
-```
 ＞python -m pudb -m llama.llama_quant decapoda-research/llama-65b-hf c4 --load q --model_path pyllama-65B3b.2.0.0+cu118.pt --bits 3 --benchmark 1024 --max_length 64 --perplexity
 🌳 LLaMAForCausalLM<trainable_params:525606912,all_params:65285660672,percentage:0.80509%>
 ├── LLaMAModel(model)
