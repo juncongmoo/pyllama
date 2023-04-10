@@ -15,13 +15,13 @@ from peft import LoraConfig, get_peft_model
 from llama.hf import LLaMAConfig, LLaMAForCausalLM, LLaMATokenizer
 
 # optimized for RTX 4090. for larger GPUs, increase some of these?
-MICRO_BATCH_SIZE = 16  # this could actually be 5 but i like powers of 2
+MICRO_BATCH_SIZE = 8  # this could actually be 5 but i like powers of 2
 BATCH_SIZE = 128
 GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
 EPOCHS = 1  # we don't need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
 CUTOFF_LEN = 256  # 256 accounts for about 96% of the data
-LORA_R = 64
+LORA_R = 16
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
 
@@ -80,6 +80,7 @@ def prepare_model_for_int4_training(
 
 args = get_args()
 ru = Runner(args)
+data = ru.load_custom_data("dataset/alpaca_data_cleaned.json")
 ru.run()
 model = ru.model
 
@@ -150,7 +151,7 @@ model = get_peft_model(model, config)
 # ru.tokenizer.pad_token_id = 0  # unk. we want this to be different from the eos token
 # data = load_dataset("json", data_files="dataset/alpaca_data_cleaned.json")
 
-data = ru.load_custom_data()
+
 
 model.print_trainable_parameters()
 
@@ -218,8 +219,8 @@ for name, buffer in model.named_buffers():
 # print_model(model_ori, show_buffer=True)
 
 training_args = transformers.TrainingArguments(
-    per_device_train_batch_size=16,
-    gradient_accumulation_steps=2,  # GRADIENT_ACCUMULATION_STEPS,
+    per_device_train_batch_size=MICRO_BATCH_SIZE,
+    gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
     warmup_steps=100,
     num_train_epochs=1,
     learning_rate=LEARNING_RATE,
@@ -233,6 +234,7 @@ training_args = transformers.TrainingArguments(
     save_strategy="steps",
     eval_steps=None,
     save_steps=20,
+    report_to=None
 )
 
 trainer = transformers.Trainer(
