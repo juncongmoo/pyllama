@@ -1,0 +1,114 @@
+**************************************** bits=2 ****************************************
+Number of parameters: 6738415616
+compression rate:24.31%
+Median: 0.035689711570739746
+PPL: 4.423939228057861
+Max memory(MiB): 6303.2841796875
+final quant bits:6.64
+Number of parameters: 1638338560
+Median: 0.03661823272705078
+PPL: 4.423880100250244
+Max memory(MiB): 6303.2841796875
+Number of parameters: 1638338560
+Median: 0.03608131408691406
+PPL: 7.993113994598389
+Max memory(MiB): 6303.2841796875
+Number of parameters: 1638338560
+Median: 0.03601789474487305
+PPL: 9.15170669555664
+Max memory(MiB): 6303.2841796875
+**************************************** bits=3 ****************************************
+Number of parameters: 6738415616
+compression rate:24.34%
+Median: 0.035295724868774414
+PPL: 4.427037715911865
+Max memory(MiB): 6311.0341796875
+final quant bits:6.65
+Number of parameters: 1640271872
+Median: 0.035941362380981445
+PPL: 4.427104473114014
+Max memory(MiB): 6311.0341796875
+Number of parameters: 1640271872
+Median: 0.036208391189575195
+PPL: 7.5551629066467285
+Max memory(MiB): 6311.0341796875
+Number of parameters: 1640271872
+Median: 0.03622591495513916
+PPL: 9.07205867767334
+Max memory(MiB): 6311.0341796875
+**************************************** bits=4 ****************************************
+Number of parameters: 6738415616
+compression rate:24.43%
+Median: 0.03611636161804199
+PPL: 4.417963027954102
+Max memory(MiB): 6333.0341796875
+final quant bits:6.68
+Number of parameters: 1646235648
+Median: 0.036957502365112305
+PPL: 4.417847633361816
+Max memory(MiB): 6333.0341796875
+Number of parameters: 1646235648
+Median: 0.03610885143280029
+PPL: 7.859492778778076
+Max memory(MiB): 6333.0341796875
+Number of parameters: 1646235648
+Median: 0.0359722375869751
+PPL: 8.86085319519043
+Max memory(MiB): 6333.0341796875
+**************************************** bits=5 ****************************************
+Number of parameters: 6738415616
+compression rate:24.63%
+Median: 0.035587430000305176
+PPL: 4.385853290557861
+Max memory(MiB): 6386.5341796875
+final quant bits:6.76
+Number of parameters: 1659572224
+Median: 0.03635251522064209
+PPL: 4.386355400085449
+Max memory(MiB): 6386.5341796875
+Number of parameters: 1659572224
+Median: 0.03603172302246094
+PPL: 7.713263511657715
+Max memory(MiB): 6386.5341796875
+Number of parameters: 1659572224
+Median: 0.036013007164001465
+PPL: 8.867740631103516
+Max memory(MiB): 6386.5341796875
+**************************************** bits=6 ****************************************
+Number of parameters: 6738415616
+compression rate:25.09%
+Median: 0.03574192523956299
+PPL: 4.314438343048096
+Max memory(MiB): 6506.1591796875
+final quant bits:6.93
+Number of parameters: 1690996736
+Median: 0.03700447082519531
+PPL: 4.31362771987915
+Max memory(MiB): 6506.1591796875
+Number of parameters: 1690996736
+Median: 0.036791443824768066
+PPL: 7.306628704071045
+Max memory(MiB): 6506.1591796875
+Number of parameters: 1690996736
+Median: 0.03638505935668945
+PPL: 8.783049583435059
+Max memory(MiB): 6506.1591796875
+**************************************** bits=7 ****************************************
+Number of parameters: 6738415616
+compression rate:25.98%
+Median: 0.03644609451293945
+PPL: 4.326796054840088
+Max memory(MiB): 6736.9091796875
+final quant bits:7.25
+Number of parameters: 1750503424
+Median: 0.03649425506591797
+PPL: 4.32697868347168
+Max memory(MiB): 6736.9091796875
+Number of parameters: 1750503424
+Median: 0.03642916679382324
+PPL: 7.201694965362549
+Max memory(MiB): 6736.9091796875
+Number of parameters: 1750503424
+Median: 0.03644096851348877
+PPL: 8.76436710357666
+Max memory(MiB): 6736.9091796875
