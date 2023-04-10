@@ -164,7 +164,7 @@ def run(args):
                 temperature=args.temperature,
             )
         print("*" * 80)
-        print("🦙:", tokenizer.decode([el.item() for el in generated_ids[0]]))
+        print("🤖:", tokenizer.decode([el.item() for el in generated_ids[0]]))
         return
 
     layers_to_move = ["embed_tokens", "norm"]
@@ -205,7 +205,7 @@ def run(args):
         print_model(model, show_buffer=True)
         model_pack(model, quantizers, args.bits, torch.device("cpu"))
         torch.save(model.state_dict(), args.save)
-        model.save_pretrained(args.save + ".pretrained")
+        #model.save_pretrained(args.save + ".pretrained")
 
 
 if __name__ == "__main__":

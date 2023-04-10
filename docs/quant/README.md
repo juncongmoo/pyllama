@@ -64,6 +64,46 @@ Number of parameters: 13015864320
 Median: 0.04523146152496338
 PPL: 215.22183227539062
 Max memory(MiB): 4483.3935546875
+
+python -m llama.llama_quant --model decapoda-research/llama-13b-hf c4 --load q --model_path pyllama-13B3b.2.0.0+cu118.pt --bits 3 --benchmark 1024 --max_length 64 --perplexity
+🌳 LLaMAForCausalLM<trainable_params:328094720,all_params:13015864320,percentage:2.52073%>
+├── LLaMAModel(model)
+│   ├── Embedding(embed_tokens)|weight[32000,5120]<f16>
+│   ├── ModuleList(layers)
+│   │   └── 💠 LLaMADecoderLayer(0-39)<🦜:10240,317204480x40>
+│   │       ┣━━ LLaMAAttention(self_attn)
+│   │       ┃   ┣━━ 💠 QuantLinear(q_proj,k_proj,v_proj,o_proj)<🦜:0,26214400x4>|qweight[480,5120]<i32>❄️|shift[5120,1]❄️|scales[5120,1]❄️|bias[5120]❄️
+│   │       ┃   ┗━━ RotaryEmbedding(rotary_emb)|inv_freq[64]❄️
+│   │       ┣━━ LLaMAMLP(mlp)
+│   │       ┃   ┣━━ 💠 QuantLinear(gate_proj,up_proj)<🦜:0,70778880x2>|qweight[480,13824]<i32>❄️|shift[13824,1]❄️|scales[13824,1]❄️|bias[13824]❄️
+│   │       ┃   ┗━━ QuantLinear(down_proj)|qweight[1296,5120]<i32>❄️|shift[5120,1]❄️|scales[5120,1]❄️|bias[5120]❄️
+│   │       ┗━━ 💠 RMSNorm(input_layernorm,post_attention_layernorm)<🦜:5120x2>|weight[5120]<f16>
+│   └── RMSNorm(norm)|weight[5120]<f16>
+└── Linear(lm_head)|weight[32000,5120]<f16>
+Number of parameters: 13015864320
+Median: 0.045313119888305664
+PPL: 4.71307897567749
+Max memory(MiB): 6078.3935546875
+
+python -m llama.llama_quant --model decapoda-research/llama-13b-hf c4 --load q --model_path pyllama-13B4b.2.0.0+cu118.pt --bits 4 --benchmark 1024 --max_length 64 --perplexity
+🌳 LLaMAForCausalLM<trainable_params:328094720,all_params:13015864320,percentage:2.52073%>
+├── LLaMAModel(model)
+│   ├── Embedding(embed_tokens)|weight[32000,5120]<f16>
+│   ├── ModuleList(layers)
+│   │   └── 💠 LLaMADecoderLayer(0-39)<🦜:10240,317204480x40>
+│   │       ┣━━ LLaMAAttention(self_attn)
+│   │       ┃   ┣━━ 💠 QuantLinear(q_proj,k_proj,v_proj,o_proj)<🦜:0,26214400x4>|qweight[640,5120]<i32>❄️|shift[5120,1]❄️|scales[5120,1]❄️|bias[5120]❄️
+│   │       ┃   ┗━━ RotaryEmbedding(rotary_emb)|inv_freq[64]❄️
+│   │       ┣━━ LLaMAMLP(mlp)
+│   │       ┃   ┣━━ 💠 QuantLinear(gate_proj,up_proj)<🦜:0,70778880x2>|qweight[640,13824]<i32>❄️|shift[13824,1]❄️|scales[13824,1]❄️|bias[13824]❄️
+│   │       ┃   ┗━━ QuantLinear(down_proj)|qweight[1728,5120]<i32>❄️|shift[5120,1]❄️|scales[5120,1]❄️|bias[5120]❄️
+│   │       ┗━━ 💠 RMSNorm(input_layernorm,post_attention_layernorm)<🦜:5120x2>|weight[5120]<f16>
+│   └── RMSNorm(norm)|weight[5120]<f16>
+└── Linear(lm_head)|weight[32000,5120]<f16>
+Number of parameters: 13015864320
+Median: 0.04819202423095703
+PPL: 4.254908084869385
+Max memory(MiB): 3773.23486328125
 ```
 
 ### 65B
