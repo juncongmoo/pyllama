@@ -128,7 +128,7 @@ model = prepare_model_for_int4_training(model)
 # import pudb; pu.db
 print("o" * 80)
 print(model.model.layers[0].self_attn.q_proj.scales)
-print(model.model.layers[0].self_attn.q_proj.zeros)
+print(model.model.layers[0].self_attn.q_proj.shift)
 print(model.model.layers[0].self_attn.q_proj.bias)
 print("o" * 80)
 
