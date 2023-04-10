@@ -1,5 +1,6 @@
 import logging
-
+logging.getLogger("datasets.builder").setLevel(logging.ERROR)
+logging.basicConfig(level=logging.ERROR)
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import torch
@@ -24,8 +25,7 @@ LORA_R = 64
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
 
-logging.getLogger("datasets.builder").setLevel(logging.ERROR)
-logging.basicConfig(level=logging.ERROR)
+
 
 
 def prepare_model_for_int4_training(

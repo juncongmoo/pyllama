@@ -14,7 +14,9 @@ Median: 0.044960856437683105
 PPL: 8.733440399169922
 Max memory(MiB): 13372.7216796875
 """
-
+import logging
+logging.getLogger("datasets.builder").setLevel(logging.ERROR)
+logging.basicConfig(level=logging.ERROR)
 
 from gptq.runner import run
 from gptq.utils import get_args, DATASET_LIST
