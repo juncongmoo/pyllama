@@ -24,7 +24,7 @@ def download_watchdog(args):
     def watch():
         import time
 
-        # every 30s, check total file size under folder to see if it increases as the download speed suggests. if not, restart download
+        # every 120s, check total file size under folder to see if it increases as the download speed suggests. if not, restart download
         folder = args.folder if args.folder else "pyllama_data"
         last_total_size = -1
         while True:
@@ -48,7 +48,7 @@ def download_watchdog(args):
                         f"Download watchdog: total file size increased normally at speed {size_changed_mb / 30:.2f}MB/s"
                     )
                 last_total_size = total_size
-            time.sleep(30)
+            time.sleep(120)
 
     watch_thread = Thread(target=watch, daemon=True)
     watch_thread.start()
