@@ -48,7 +48,7 @@ def download_watchdog(args):
                         f"Download watchdog: total file size increased normally at speed {size_changed_mb / 30:.2f}MB/s"
                     )
                 last_total_size = total_size
-            time.sleep(30)
+            time.sleep(120)
 
     watch_thread = Thread(target=watch, daemon=True)
     watch_thread.start()
