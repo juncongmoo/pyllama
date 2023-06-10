@@ -3,3 +3,4 @@ fairscale>=0.4.13
 fire~=0.5.0
 hiq-python>=1.1.9
 sentencepiece==0.1.97
+transformers==4.30.1
