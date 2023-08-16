@@ -12,7 +12,7 @@ GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
 EPOCHS = 1  # we don't need 3 tbh
 LEARNING_RATE = 3e-4  # the Karpathy constant
 CUTOFF_LEN = 256  # 256 accounts for about 96% of the data
-LORA_R = 64
+LORA_R = 16
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.05
 
@@ -58,8 +58,8 @@ def prepare(
 
 def load_lora_model(
     f="lora-alpaca/checkpoint-1620/pytorch_model.bin",
-    bits=2,
     max_lora_layers=5,
+    qbits=None,
     dev=torch.device("cuda:0"),
     new_class=QuantLinear,
 ):
@@ -72,9 +72,9 @@ def load_lora_model(
     torch.set_default_dtype(torch.float)
     model = load_quant(
         model_ori,
-        None,
-        bits,
-        ["lm_head"],
+        checkpoint=None,
+        qbits=qbits,
+        skip_layers=("lm_head",),
         seqlen=1024,
         for_infer=True,
         dev=dev,
@@ -88,7 +88,6 @@ def load_lora_model(
         target_modules=["k_proj", "down_proj", "up_proj"],
         lora_dropout=LORA_DROPOUT,
         bias="none",
-        bits=bits,
         max_lora_layers=max_lora_layers,
     )
     model = get_peft_model(model, config)

@@ -1,19 +1,7 @@
-"""
-👉python llama_tool.py
-**************************************** bits=8 ****************************************
-Number of parameters: 6738415616
-Median: 0.04436063766479492
-PPL: 4.304362773895264
-Max memory(MiB): 13372.7216796875
-Number of parameters: 6738415616
-Median: 0.04503834247589111
-PPL: 7.157315254211426
-Max memory(MiB): 13372.7216796875
-Number of parameters: 6738415616
-Median: 0.044960856437683105
-PPL: 8.733440399169922
-Max memory(MiB): 13372.7216796875
-"""
+from llama.lora_model import load_lora_model
+import torch
+import os
+
 import logging
 logging.getLogger("datasets.builder").setLevel(logging.ERROR)
 logging.basicConfig(level=logging.ERROR)
@@ -21,23 +9,28 @@ logging.basicConfig(level=logging.ERROR)
 from gptq.runner import run
 from gptq.utils import get_args, DATASET_LIST
 
+bits_path='rock/decapoda-research/llama-7b-hf-4b.pt.bits'
+qbits = torch.load(bits_path) if os.path.exists(bits_path) else None
+
+model = load_lora_model(f="lora-alpaca-4/checkpoint-20/pytorch_model.bin", qbits=qbits, max_lora_layers=500)
+model.eval()
 
 def rock(
     base_model="decapoda-research/llama-7b-hf",
-    output_dir="./rock",
     bb=8,
+    model=None,
 ):
     args_ = get_args()
     args_.model = base_model
-    args_.load = "hf"
+    args_.load = "lora"
     args_.bits = bb
-    args_.save = f'{output_dir}/{base_model}-{args_.bits}b.pt'
+    args_.save = ""
     args_.benchmark = 1024
     args_.perplexity = True
     args_.max_length = 64
     args_.verbose = False
 
-    model = run(args_)
+    model = run(args_, model=model)
     # num_params = model.num_parameters()
     # print(f"compression rate:{num_params/125239296*100:.2f}%")
     if hasattr(model, "qbits"):
@@ -52,6 +45,4 @@ def rock(
 
 
 if __name__ == "__main__":
-    for b in range(3, 5):
-        print("*" * 40, f"bits={b}", "*" * 40)
-        rock(bb=b)
+    rock(model=model)

@@ -42,6 +42,98 @@ PPL: 5.137877464294434
 Max memory(MiB): 4172.2841796875
 ```
 
+### 4bit
+
+After finetuning, the performance is worse in the original dataset.
+
+After 80 steps:
+
+```
+Number of parameters: 6758076416
+Processing C4 Samples: 100%|█████████| 128/128 [00:06<00:00, 19.03it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [01:03<00:00, 16.15it/s]
+Median: 0.06077373027801514
+PPL: 12.594114303588867
+Max memory(MiB): 2989.69189453125
+Number of parameters: 6758076416
+Processing C4 Samples: 100%|█████████| 128/128 [00:06<00:00, 19.42it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [01:02<00:00, 16.39it/s]
+Median: 0.05998396873474121
+PPL: 12.597537994384766
+Max memory(MiB): 2989.7041015625
+Number of parameters: 6758076416
+Processing Wikitext2 Samples: 100%|█████████████| 128/128 [00:00<00:00, 33944.80it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [01:03<00:00, 16.24it/s]
+Median: 0.0605393648147583
+PPL: 8.711161613464355
+Max memory(MiB): 2989.7041015625
+Number of parameters: 6758076416
+Processing PTB Samples: 100%|█████| 128/128 [00:00<00:00, 34307.04it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [01:04<00:00, 15.99it/s]
+Median: 0.061057090759277344
+PPL: 9.273012161254883
+Max memory(MiB): 2989.7041015625
+```
+
+After 100 steps:
+
+```
+Number of parameters: 6758076416
+Processing C4 Samples: 100%|█████████| 128/128 [00:02<00:00, 54.37it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [00:49<00:00, 20.89it/s]
+Median: 0.047434449195861816
+PPL: 12.870625495910645
+Max memory(MiB): 2989.69189453125
+Number of parameters: 6758076416
+Processing C4 Samples: 100%|█████████| 128/128 [00:02<00:00, 55.65it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [00:50<00:00, 20.33it/s]
+Median: 0.04917097091674805
+PPL: 12.872316360473633
+Max memory(MiB): 2989.69189453125
+Number of parameters: 6758076416
+Processing Wikitext2 Samples: 100%|███████| 128/128 [00:00<00:00, 52852.03it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [00:50<00:00, 20.30it/s]
+Median: 0.04886960983276367
+PPL: 9.596293449401855
+Max memory(MiB): 2989.69189453125
+Number of parameters: 6758076416
+Processing PTB Samples: 100%|█████| 128/128 [00:00<00:00, 55496.27it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [00:50<00:00, 20.31it/s]
+Median: 0.04884529113769531
+PPL: 9.792820930480957
+Max memory(MiB): 2989.69189453125
+```
+
+
+After 60 steps:
+
+```
+Number of parameters: 6758076416
+Processing C4 Samples: 100%|█████████| 128/128 [00:02<00:00, 53.99it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [00:49<00:00, 20.75it/s]
+Median: 0.04757583141326904
+PPL: 12.434136390686035
+Max memory(MiB): 2989.69189453125
+Number of parameters: 6758076416
+Processing C4 Samples: 100%|█████████| 128/128 [00:02<00:00, 55.74it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [00:48<00:00, 20.93it/s]
+Median: 0.04744601249694824
+PPL: 12.43647289276123
+Max memory(MiB): 2989.69189453125
+Number of parameters: 6758076416
+Processing Wikitext2 Samples: 100%|█████| 128/128 [00:00<00:00, 52624.08it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [00:50<00:00, 20.21it/s]
+Median: 0.04935407638549805
+PPL: 8.407084465026855
+Max memory(MiB): 2989.69189453125
+Number of parameters: 6758076416
+Processing PTB Samples: 100%|█████| 128/128 [00:00<00:00, 54621.11it/s]
+Benchmarking: 100%|████████████████| 1024/1024 [00:51<00:00, 20.04it/s]
+Median: 0.05000042915344238
+PPL: 9.228442192077637
+Max memory(MiB): 2989.69189453125
+```
+
 ### 13B
 
 ```
