@@ -18,7 +18,7 @@ import logging
 logging.getLogger("datasets.builder").setLevel(logging.ERROR)
 logging.basicConfig(level=logging.ERROR)
 
-from gptq.runner import run
+from gptq.runner import Runner
 from gptq.utils import get_args, DATASET_LIST
 
 
@@ -31,23 +31,25 @@ def rock(
     args_.model = base_model
     args_.load = "hf"
     args_.bits = bb
-    args_.save = f'{output_dir}/{base_model}-{args_.bits}b.pt'
+    args_.save = "" #f'{output_dir}/{base_model}-{args_.bits}b.pt'
     args_.benchmark = 1024
     args_.perplexity = True
     args_.max_length = 64
     args_.verbose = False
 
-    model = run(args_)
+
+    model = Runner(args_).run() if args_.save else None
     # num_params = model.num_parameters()
     # print(f"compression rate:{num_params/125239296*100:.2f}%")
-    if hasattr(model, "qbits"):
+    if model is not None and hasattr(model, "qbits"):
         mean_ = sum(model.qbits.values()) / len(model.qbits)
         print(f"final quant bits:{mean_:.2f}")
+    start = 1 if args_.save else 0
     args_.save = ""
 
-    for i in DATASET_LIST:
+    for i in DATASET_LIST[start:]:
         args_.dataset = i
-        run(args_, model=model)
+        Runner(args_).run(model=model)
     return args_
 
 
