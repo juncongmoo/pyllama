@@ -24,7 +24,7 @@ from gptq.utils import get_args, DATASET_LIST
 
 def rock(
     base_model="decapoda-research/llama-7b-hf",
-    output_dir="/home/ubuntu/fuheng/pyllama/rock",
+    output_dir="./rock",
     bb=8,
 ):
     args_ = get_args()
@@ -54,6 +54,6 @@ def rock(
 
 
 if __name__ == "__main__":
-    for b in range(2, 8):
+    for b in range(3, 5):
         print("*" * 40, f"bits={b}", "*" * 40)
         rock(bb=b)
